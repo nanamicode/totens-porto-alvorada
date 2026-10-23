@@ -25,36 +25,20 @@ Object.assign(PRM, opts.params || {});
 (opts.eventos || []).forEach(k => { EV[k] = true; });
 (opts.pausadas || []).forEach(c => { CON[c] = false; });
 if (opts.escalaHorario) CRE.forEach(cr => { const f = cr.tm; cr.tm = h => 1 + opts.escalaHorario * (f(h) - 1); });
-init(opts.seed);
-if (opts.escalaDesgaste) S.totems.forEach(t => { t.r *= opts.escalaDesgaste; });
-if (opts.desgasteVerdadeiro) brain.setRest(i => S.totems[i].r);
-if (opts.periodoVerdadeiro) brain.setPeriodFactor((c, per) => {   // teto: o algoritmo conhece o efeito do horário
-  let a = 0, d = 0;
-  for (let h = 0; h < 24; h++) { const v = CRE[c].tm(h); d += v; if (((h / 3) | 0) === per) a += v; }
-  return (a / 3) / (d / 24);
+const sementes = opts.sementes || [opts.seed];
+const resultados = sementes.map(seed => {
+  init(seed);
+  if (opts.escalaDesgaste) S.totems.forEach(t => { t.r *= opts.escalaDesgaste; });
+  if (opts.desgasteVerdadeiro) brain.setRest(i => S.totems[i].r);
+  if (opts.periodoVerdadeiro) brain.setPeriodFactor((c, per) => {   // teto: o algoritmo conhece o efeito do horário
+    let a = 0, d = 0;
+    for (let h = 0; h < 24; h++) { const v = CRE[c].tm(h); d += v; if (((h / 3) | 0) === per) a += v; }
+    return (a / 3) / (d / 24);
+  });
+  for (let k = 0; k < opts.steps; k++) step();
+  return resumirMundo();
 });
-for (let k = 0; k < opts.steps; k++) step();
-const G = brain.cells.G, melhor = [], verdade = [];
-for (let s = 0; s < NS; s++) {
-  let b = 0, tb = 0, vb = -1, vt = -1;
-  for (let c = 0; c < NC; c++) {
-    const k = s * NC + c, v = (G.a[k] + .2) / (G.n[k] + 10);
-    if (CON[c] && v > vb) { vb = v; b = c; }
-    const cr = CRE[c];
-    let m = 0; ZONES.forEach(z => { m += cr.zone[z.id] ?? 1; });
-    const t = cr.base * cr.age[s & 3] * cr.gen[s >> 2] * m / ZONES.length;
-    if (CON[c] && t > vt) { vt = t; tb = c; }
-  }
-  melhor.push(b); verdade.push(tb);
-}
-return {
-  olhares: S.tot.v, interacoes: S.tot.e,
-  bins: S.bins.map(b => b.e), binsOlhares: S.bins.map(b => b.v),
-  porCriativo: S.cs.map(c => ({ olhares: Array.from(c.v), interacoes: Array.from(c.e), spots: Array.from(c.s) })),
-  zonas: ZONES.map((z, zi) => ({ id: z.id, interacoes: [0, 1, 2].map(p => S.totems.filter(t => t.zi === zi).reduce((a, t) => a + t.eng[p], 0)) })),
-  desgaste: S.totems.map(t => ({ zona: t.zi, real: t.r, estimado: brain.rest(t.id) })),
-  melhor, verdade, totens: S.totems.length,
-};`;
+return opts.sementes ? resultados : resultados[0];`;
 
 const executar = new Function('opts', 'performance', CORPO);
 

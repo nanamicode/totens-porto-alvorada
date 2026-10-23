@@ -104,6 +104,22 @@
     </div>
   </section>
 
+  <section class="card sementes" aria-label="Variação entre sementes">
+    <h2>Variação entre sementes</h2>
+    <p class="hint">Roda várias cidades novas (sementes 1 a N) com os parâmetros, cenários e campanhas de agora e mostra quanto o ganho varia de uma para outra. A simulação ao vivo fica parada durante a execução e volta como estava.</p>
+    <div class="lote-controls">
+      <label>Sementes <select id="selSem"><option value="5">5</option><option value="10" selected>10</option><option value="20">20</option></select></label>
+      <label>Duração de cada uma <select id="selDur"><option value="6">6 horas</option><option value="12">12 horas</option><option value="24" selected>1 dia</option><option value="48">2 dias</option></select></label>
+      <button class="btn primary" id="btnLote" type="button">Rodar</button>
+      <button class="btn" id="btnLoteCancel" type="button" hidden>Cancelar</button>
+      <button class="btn" id="btnLoteCsv" type="button" hidden>Copiar CSV</button>
+    </div>
+    <progress id="loteProg" max="1" value="0" hidden></progress>
+    <p class="hint" id="loteMsg" aria-live="polite"></p>
+    <div id="loteRes"><p class="hint">Ainda não rodou. Cada dia simulado leva alguns segundos: 10 sementes de 1 dia levam cerca de meio minuto num computador comum. O resultado mostra o ganho médio, o intervalo de 95% e o ganho de cada semente.</p></div>
+    <textarea id="loteCsvArea" readonly hidden rows="6" aria-label="CSV para copiar"></textarea>
+  </section>
+
   <section class="lower">
 
     <div class="card">
@@ -194,6 +210,7 @@
 <script src="js/ui.js"></script>
 <script src="js/calc.js"></script>
 <script src="js/network.js"></script>
+<script src="js/sementes.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

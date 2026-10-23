@@ -22,6 +22,14 @@ node tools/avaliar.js --desgaste=2.5                     # desgaste do mundo 2,5
 
 `tools/headless.js` carrega os mesmos arquivos de `site/js` que o navegador usa (`util`, `config`, `world`, `brain` e `sim`) e roda o mundo, o Brain, a rotação fixa e o oráculo sem interface. Um dia simulado leva cerca de 2,5 s.
 
+## No site
+
+A seção **Variação entre sementes**, abaixo do painel da rede, faz o mesmo no navegador: roda 5, 10 ou 20 cidades novas (sementes 1 a N) de 6 horas a 2 dias, com os parâmetros, cenários e campanhas de agora. Mostra o ganho médio, o intervalo de 95%, o desvio, o menor e o maior ganho, um gráfico com um ponto por semente, a tabela completa e um botão para copiar o CSV.
+
+- A simulação ao vivo fica parada durante a execução e volta exatamente como estava. Dá para cancelar.
+- 10 sementes de 1 dia levam cerca de 20 a 30 segundos.
+- As sementes são as mesmas de `npm run avaliar`, mas os números não batem dígito por dígito: a mesma semente reproduz o mesmo dia só no mesmo ambiente. Entre o Node e o navegador, as primeiras centenas de spots coincidem e depois as trajetórias se afastam, por diferenças de arredondamento das funções matemáticas. Em média os resultados concordam: com 10 sementes de 1 dia, o ganho foi de 24,0% no navegador e de 24,1% no Node.
+
 ## Resultado de referência
 
 10 sementes, 1 dia simulado cada (a partir das 06:00 de segunda), parâmetros padrão:
@@ -37,7 +45,7 @@ O ganho médio tem intervalo de 95% de 23,4% a 24,8%. Antes da issue 5 (`--corri
 
 ## O que os testes garantem
 
-- A mesma semente reproduz exatamente o mesmo dia.
+- A mesma semente reproduz exatamente o mesmo dia, no mesmo ambiente, e rodar sementes em sequência não deixa estado de uma na outra.
 - O algoritmo supera a rotação em todas as sementes (pior caso acima de 10%, média acima de 15%).
 - A eficiência do algoritmo fica acima de 85% e pelo menos 8 pontos acima da rotação.
 - O algoritmo descobre o melhor criativo de quase todos os perfis, e acerta bem mais depois de um dia do que depois de uma hora.

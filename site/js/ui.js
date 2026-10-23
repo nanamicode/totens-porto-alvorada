@@ -102,6 +102,7 @@ function renderChart(){
 }
 let lastUI=0,lastHeat=0;
 function renderUI(now){
+  if(emLote)return;
   renderKPIs();renderLegend();renderPanel();renderLog();renderChart();renderDrawer(false);
   if(now-lastHeat>900){renderHeat();renderNet();lastHeat=now;}
 }

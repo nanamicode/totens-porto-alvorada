@@ -89,3 +89,29 @@ function step(){
   S.t+=30;S.step++;
   if(S.t-S.binT>=900){S.bins.push(S.bin);S.bin={v:0,e:[0,0,0]};S.binT+=900;}
 }
+
+/* Resumo do mundo atual: interações por política, séries de 15 min, aprendizado e desgaste.
+   Usado pela avaliação com várias sementes, no navegador e no Node. */
+function resumirMundo(){
+  const G=brain.cells.G,melhor=[],verdade=[];
+  for(let s=0;s<NS;s++){
+    let b=0,tb=0,vb=-1,vt=-1;
+    for(let c=0;c<NC;c++){
+      const k=s*NC+c,v=(G.a[k]+.2)/(G.n[k]+10);
+      if(CON[c]&&v>vb){vb=v;b=c;}
+      const cr=CRE[c];
+      let m=0;ZONES.forEach(z=>{m+=cr.zone[z.id]??1;});
+      const t=cr.base*cr.age[s&3]*cr.gen[s>>2]*m/ZONES.length;
+      if(CON[c]&&t>vt){vt=t;tb=c;}
+    }
+    melhor.push(b);verdade.push(tb);
+  }
+  return {
+    olhares:S.tot.v,interacoes:S.tot.e.slice(),
+    bins:S.bins.map(b=>b.e),binsOlhares:S.bins.map(b=>b.v),
+    porCriativo:S.cs.map(c=>({olhares:Array.from(c.v),interacoes:Array.from(c.e),spots:Array.from(c.s)})),
+    zonas:ZONES.map((z,zi)=>({id:z.id,interacoes:[0,1,2].map(p=>S.totems.filter(t=>t.zi===zi).reduce((a,t)=>a+t.eng[p],0))})),
+    desgaste:S.totems.map(t=>({zona:t.zi,real:t.r,estimado:brain.rest(t.id)})),
+    melhor,verdade,totens:S.totems.length,
+  };
+}
