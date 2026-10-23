@@ -1,0 +1,244 @@
+{
+  "totens": [
+    {
+      "id": "T-01",
+      "nome": "Portaria Principal",
+      "zona": "uni"
+    },
+    {
+      "id": "T-02",
+      "nome": "Biblioteca Central",
+      "zona": "uni"
+    },
+    {
+      "id": "T-03",
+      "nome": "Bandejão",
+      "zona": "uni"
+    },
+    {
+      "id": "T-04",
+      "nome": "Bloco de Engenharia",
+      "zona": "uni"
+    },
+    {
+      "id": "T-05",
+      "nome": "Ponto de Ônibus do Campus",
+      "zona": "uni"
+    },
+    {
+      "id": "T-06",
+      "nome": "Praça do Diretório",
+      "zona": "uni"
+    },
+    {
+      "id": "T-07",
+      "nome": "Av. Brasil · Bolsa",
+      "zona": "centro"
+    },
+    {
+      "id": "T-08",
+      "nome": "Largo da Matriz",
+      "zona": "centro"
+    },
+    {
+      "id": "T-09",
+      "nome": "Rua do Comércio",
+      "zona": "centro"
+    },
+    {
+      "id": "T-10",
+      "nome": "Edifício Atlântico",
+      "zona": "centro"
+    },
+    {
+      "id": "T-11",
+      "nome": "Galeria Central",
+      "zona": "centro"
+    },
+    {
+      "id": "T-12",
+      "nome": "Praça do Relógio",
+      "zona": "centro"
+    },
+    {
+      "id": "T-13",
+      "nome": "Shopping Vila Nova · Entrada",
+      "zona": "shopping"
+    },
+    {
+      "id": "T-14",
+      "nome": "Praça de Alimentação",
+      "zona": "shopping"
+    },
+    {
+      "id": "T-15",
+      "nome": "Rua das Lojas",
+      "zona": "shopping"
+    },
+    {
+      "id": "T-16",
+      "nome": "Calçadão Leste",
+      "zona": "shopping"
+    },
+    {
+      "id": "T-17",
+      "nome": "Boulevard Sul",
+      "zona": "shopping"
+    },
+    {
+      "id": "T-18",
+      "nome": "Outlet Porto",
+      "zona": "shopping"
+    },
+    {
+      "id": "T-19",
+      "nome": "Mercado do Bairro",
+      "zona": "resid"
+    },
+    {
+      "id": "T-20",
+      "nome": "Praça das Flores",
+      "zona": "resid"
+    },
+    {
+      "id": "T-21",
+      "nome": "Escola Municipal",
+      "zona": "resid"
+    },
+    {
+      "id": "T-22",
+      "nome": "Posto de Saúde",
+      "zona": "resid"
+    },
+    {
+      "id": "T-23",
+      "nome": "Padaria da Esquina",
+      "zona": "resid"
+    },
+    {
+      "id": "T-24",
+      "nome": "Ponto da Linha 12",
+      "zona": "resid"
+    },
+    {
+      "id": "T-25",
+      "nome": "Plataforma Norte",
+      "zona": "estacao"
+    },
+    {
+      "id": "T-26",
+      "nome": "Plataforma Sul",
+      "zona": "estacao"
+    },
+    {
+      "id": "T-27",
+      "nome": "Saguão Principal",
+      "zona": "estacao"
+    },
+    {
+      "id": "T-28",
+      "nome": "Terminal de Ônibus",
+      "zona": "estacao"
+    },
+    {
+      "id": "T-29",
+      "nome": "Bicicletário",
+      "zona": "estacao"
+    },
+    {
+      "id": "T-30",
+      "nome": "Passarela Leste",
+      "zona": "estacao"
+    },
+    {
+      "id": "T-31",
+      "nome": "Entrada do Parque",
+      "zona": "parque"
+    },
+    {
+      "id": "T-32",
+      "nome": "Pista de Corrida",
+      "zona": "parque"
+    },
+    {
+      "id": "T-33",
+      "nome": "Lago",
+      "zona": "parque"
+    },
+    {
+      "id": "T-34",
+      "nome": "Quiosque da Orla",
+      "zona": "parque"
+    },
+    {
+      "id": "T-35",
+      "nome": "Ciclovia",
+      "zona": "parque"
+    },
+    {
+      "id": "T-36",
+      "nome": "Mirante do Rio",
+      "zona": "parque"
+    },
+    {
+      "id": "T-37",
+      "nome": "Rua do Bar",
+      "zona": "noite"
+    },
+    {
+      "id": "T-38",
+      "nome": "Praça da Música",
+      "zona": "noite"
+    },
+    {
+      "id": "T-39",
+      "nome": "Casa de Shows",
+      "zona": "noite"
+    },
+    {
+      "id": "T-40",
+      "nome": "Esquina Neon",
+      "zona": "noite"
+    },
+    {
+      "id": "T-41",
+      "nome": "Beco das Pizzas",
+      "zona": "noite"
+    },
+    {
+      "id": "T-42",
+      "nome": "Cine Teatro",
+      "zona": "noite"
+    }
+  ],
+  "criativos": [
+    {
+      "id": "pulse-academia",
+      "nome": "Pulse Academia"
+    },
+    {
+      "id": "brasa-cafe",
+      "nome": "Brasa Café"
+    },
+    {
+      "id": "nuvem-cartao",
+      "nome": "Nuvem Cartão"
+    },
+    {
+      "id": "cine-aurora",
+      "nome": "Cine Aurora"
+    },
+    {
+      "id": "voa-idiomas",
+      "nome": "Voa Idiomas"
+    },
+    {
+      "id": "vento-running",
+      "nome": "Vento Running"
+    },
+    {
+      "id": "clinica-bem-viver",
+      "nome": "Clínica Bem Viver"
+    }
+  ]
+}

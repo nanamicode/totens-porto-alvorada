@@ -1,7 +1,7 @@
 'use strict';
 /* Menu de cálculos: último spot, posterior, zonas, registro, fórmulas e parâmetros. */
 /* ---------- Menu de cálculos ---------- */
-const drawer=$('drawer'),TABS=['spot','post','zonas','log','formulas','params'];
+const drawer=$('drawer'),TABS=['spot','post','zonas','log','eventos','formulas','params'];
 let tab='spot',lastDraw=0;
 const n2=(x,d=2)=>f2(x,d);
 const dotName=c=>`<i class="dot" style="background:${CRE[c].cor}"></i>${CRE[c].nome}`;
@@ -86,6 +86,23 @@ function renderZonas(){
     return `<tr><td>${z.nome}</td><td>${n}</td><td>${fmt(v)}</td><td>${per1k(e[0],v)}</td><td>${per1k(e[1],v)}</td><td>${per1k(e[2],v)}</td><td class="${g>=0?'hit':''}">${(g>=0?'+':'')+f2(g*100,0)}%</td></tr>`;});
   $('zonasBody').innerHTML=table(['Zona','Totens','Olhares','Algoritmo /1.000','Rotação /1.000','Oráculo /1.000','Ganho sobre rotação'],rows);
 }
+/* um campo por linha; os objetos de contagens ficam numa linha só */
+function formatarEvento(e){
+  const linhas=Eventos.CHAVES.map(k=>{
+    const v=e[k],txt=typeof v==='object'?JSON.stringify(v).replace(/,"/g,', "').replace(/":/g,'": '):JSON.stringify(v);
+    return `  "${k}": ${txt}`;
+  });
+  return ['{',linhas.join(',\n'),'}'].join('\n');
+}
+function renderEventos(){
+  let l=EVENTOS.lista;
+  if($('evSo').checked){const id=Eventos.idTotem(sel);l=l.filter(e=>e.totem===id);}
+  const ult=l.slice(-40).reverse();
+  const invalidos=ult.filter(e=>!Eventos.validar(e).ok).length;
+  $('evInfo').textContent=`${fmt(EVENTOS.total)} eventos gerados · mostrando ${ult.length}, ${invalidos?invalidos+' inválidos':'todos válidos'}`;
+  $('evUlt').textContent=ult.length?formatarEvento(ult[0]):'Sem eventos ainda. Continue a simulação ou use “+1 spot”.';
+  $('evBox').innerHTML=ult.map(e=>`<div>${JSON.stringify(e)}</div>`).join('')||'<div>Sem eventos ainda.</div>';
+}
 function renderLogTab(){
   const on={dec:$('fDec').checked,troca:$('fTroca').checked,esq:$('fEsq').checked,marco:$('fMarco').checked};
   const box=$('logBox'),stick=box.scrollTop+box.clientHeight>=box.scrollHeight-40;
@@ -135,8 +152,9 @@ function buildParams(){
   PARAMS.forEach(p=>$('pr_'+p.k).addEventListener('input',e=>{PRM[p.k]=+e.target.value;$('po_'+p.k).textContent=p.f(PRM[p.k]);renderFormulas();}));
 }
 function renderDrawer(force){
+  EVENTOS.ativo=!drawer.hidden&&tab==='eventos';      // só gera eventos enquanto alguém os está vendo
   if(drawer.hidden)return;
-  if(tab==='spot')renderSpot(force);else if(tab==='post')renderPost();else if(tab==='zonas')renderZonas();else if(tab==='log')renderLogTab();
+  if(tab==='spot')renderSpot(force);else if(tab==='post')renderPost();else if(tab==='zonas')renderZonas();else if(tab==='log')renderLogTab();else if(tab==='eventos')renderEventos();
   if(force&&tab==='formulas')renderFormulas();
 }
 function copyText(text,fallbackEl){
@@ -158,6 +176,11 @@ $('trNext').addEventListener('click',()=>{const a=S.traces;if(!a.length||viewSte
 $('trLive').addEventListener('click',()=>{viewStep=null;renderSpot();});
 $('trCopy').addEventListener('click',()=>{const a=S.traces;if(!a.length)return;const i=viewStep==null?a.length-1:Math.max(0,a.findIndex(x=>x.id===viewStep));copyText(JSON.stringify(a[i],null,1),$('copyArea'));});
 $('postLvl').addEventListener('change',renderPost);
+$('evSo').addEventListener('change',renderEventos);
+$('evCopy').addEventListener('click',()=>{
+  let l=EVENTOS.lista;if($('evSo').checked){const id=Eventos.idTotem(sel);l=l.filter(e=>e.totem===id);}
+  if(l.length)copyText(l.slice(-40).map(e=>JSON.stringify(e)).join('\n'),$('evArea'));
+});
 ['fDec','fTroca','fEsq','fMarco'].forEach(id=>$(id).addEventListener('change',renderLogTab));
 $('logCopy').addEventListener('click',()=>{const t=[...$('logBox').children].map(d=>d.textContent).join('\n');copyText(t,null);
   const rg=document.createRange();rg.selectNodeContents($('logBox'));const s=getSelection();s.removeAllRanges();s.addRange(rg);});

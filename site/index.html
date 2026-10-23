@@ -162,6 +162,7 @@
     <button type="button" role="tab" data-tab="post" aria-selected="false">Posterior</button>
     <button type="button" role="tab" data-tab="zonas" aria-selected="false">Zonas</button>
     <button type="button" role="tab" data-tab="log" aria-selected="false">Registro</button>
+    <button type="button" role="tab" data-tab="eventos" aria-selected="false">Eventos</button>
     <button type="button" role="tab" data-tab="formulas" aria-selected="false">Fórmulas</button>
     <button type="button" role="tab" data-tab="params" aria-selected="false">Parâmetros</button>
   </nav>
@@ -193,6 +194,17 @@
       </div>
       <div class="logbox" id="logBox" tabindex="0"></div>
     </div>
+    <div id="tab-eventos" hidden>
+      <p class="hint">O que um totem real enviaria ao fim de cada spot: só contagens por perfil, sem imagem e sem identificar ninguém. O formato está em docs/EVENTOS.md. Com a simulação parada, use “+1 spot” para gerar eventos.</p>
+      <div class="nav">
+        <label class="check"><input type="checkbox" id="evSo" checked> Só o totem selecionado</label>
+        <button class="btn" id="evCopy" type="button">Copiar JSONL</button>
+        <span id="evInfo" class="hint"></span>
+      </div>
+      <pre class="formula" id="evUlt">Sem eventos ainda.</pre>
+      <div class="logbox" id="evBox" tabindex="0"></div>
+      <textarea id="evArea" readonly hidden rows="6" aria-label="Eventos em JSON Lines para copiar"></textarea>
+    </div>
     <div id="tab-formulas" hidden></div>
     <div id="tab-params" hidden>
       <p class="hint">Mexa nos parâmetros e veja o efeito no ganho e nos cálculos em tempo real. A câmera pertence ao mundo simulado, os demais pertencem ao algoritmo.</p>
@@ -202,6 +214,7 @@
   </div>
 </aside>
 <script src="js/util.js"></script>
+<script src="js/eventos.js"></script>
 <script src="js/config.js"></script>
 <script src="js/world.js"></script>
 <script src="js/brain.js"></script>

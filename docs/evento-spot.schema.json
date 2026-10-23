@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Evento de spot do totem (versão 1)",
+  "description": "Enviado pelo totem ao fim de cada spot. Só contagens agregadas: nenhuma imagem nem identificador de pessoa.",
+  "type": "object",
+  "required": ["versao", "tipo", "totem", "spot", "inicio", "duracao_s", "criativo", "audiencia", "interacoes"],
+  "additionalProperties": false,
+  "properties": {
+    "versao": { "const": 1 },
+    "tipo": { "const": "spot" },
+    "totem": { "type": "string", "pattern": "^T-[0-9]{2,}$", "description": "Identificador do totem, igual ao do cadastro de totens." },
+    "spot": { "type": "string", "minLength": 1, "description": "Identificador único do spot. Serve para descartar duplicatas." },
+    "inicio": { "type": "string", "format": "date-time", "description": "Início do spot, com fuso (ISO 8601). A hora local é o que importa para o contexto de horário." },
+    "duracao_s": { "type": "number", "exclusiveMinimum": 0, "description": "Duração do spot em segundos." },
+    "criativo": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$", "description": "Identificador do criativo, igual ao do cadastro de criativos." },
+    "audiencia": {
+      "$ref": "#/$defs/contagens",
+      "description": "Pessoas que olharam para a tela durante o spot, por perfil estimado pela câmera. Spots sem ninguém são enviados com tudo zero."
+    },
+    "interacoes": {
+      "description": "Toques ou leituras de QR atribuídos ao spot. Um objeto por perfil quando o totem sabe quem interagiu; um inteiro com o total quando só sabe que houve a interação.",
+      "oneOf": [
+        { "$ref": "#/$defs/contagens" },
+        { "type": "integer", "minimum": 0 }
+      ]
+    }
+  },
+  "$defs": {
+    "contagens": {
+      "type": "object",
+      "required": ["H18-24", "H25-34", "H35-49", "H50+", "M18-24", "M25-34", "M35-49", "M50+"],
+      "additionalProperties": false,
+      "properties": {
+        "H18-24": { "type": "integer", "minimum": 0 },
+        "H25-34": { "type": "integer", "minimum": 0 },
+        "H35-49": { "type": "integer", "minimum": 0 },
+        "H50+": { "type": "integer", "minimum": 0 },
+        "M18-24": { "type": "integer", "minimum": 0 },
+        "M25-34": { "type": "integer", "minimum": 0 },
+        "M35-49": { "type": "integer", "minimum": 0 },
+        "M50+": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}

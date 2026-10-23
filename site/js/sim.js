@@ -2,6 +2,16 @@
 /* Simulação: passo de 30 s que une mundo, algoritmo, rotação fixa e oráculo, com rastreio dos cálculos. */
 /* ---------- Passo da simulação: 30 s ---------- */
 const DE=Math.exp(-Math.LN2*.5/150),DS=Math.exp(-Math.LN2*.5/180);
+/* eventos que um totem real enviaria ao fim de cada spot (docs/EVENTOS.md); só são gerados quando `ativo` */
+const EVENTOS={ativo:false,lista:[],max:300,total:0};
+function emitirEvento(tt,c,t,hE){
+  const ev=Eventos.criar({totem:tt.id,t,duracao:30,criativo:CRE_ID[c],audiencia:ne,interacoes:hE});
+  EVENTOS.total++;EVENTOS.lista.push(ev);
+  if(EVENTOS.lista.length>EVENTOS.max)EVENTOS.lista.shift();
+}
+function registroDoMundo(){
+  return {totens:S.totems.map(t=>({id:Eventos.idTotem(t.id),nome:t.nome,zona:ZONES[t.zi].id})),criativos:CRE.map((c,k)=>({id:CRE_ID[k],nome:c.nome}))};
+}
 function stampOf(t){const day=Math.floor(t/86400),s=t%86400;return DIAS[day%7]+' '+String(Math.floor(s/3600)).padStart(2,'0')+':'+String(Math.floor(s/60%60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');}
 function pushLine(k,x){S.lines.push({k,t:stampOf(S.t),x});if(S.lines.length>500)S.lines.shift();}
 function step(){
@@ -48,12 +58,12 @@ function step(){
     }
     const ch=[cA,cR,cO],fa=[0,0,0],hp=[0,0,0];
     for(let p=0;p<3;p++)fa[p]=fatT(tt.r,tt.E[p][ch[p]]);
-    const upd={};
+    const upd={},hE=EVENTOS.ativo?new Array(NS).fill(0):null;
     for(let v=0;v<N;v++){
       const base=(hI*NS+vT[v])*NC,u=vR[v];
       for(let p=0;p<3;p++){
         const hit=u<tt.P[base+ch[p]]*fa[p];
-        if(hit){tt.eng[p]++;S.tot.e[p]++;S.bin.e[p]++;hp[p]++;}
+        if(hit){tt.eng[p]++;S.tot.e[p]++;S.bin.e[p]++;hp[p]++;if(p===0&&hE)hE[vU[v]]++;}
         if(p===0){
           const inc=brain.learn(i,vU[v],cA,hit,per);
           if(TR){
@@ -84,6 +94,7 @@ function step(){
       pushLine('dec',`${tt.nome} · λ=${f2(lam)} N=${N} (câmera errou ${err}) · escolhe ${CRE[cA].nome} (esperado ${pc(expA)}; 2ª ${CRE[runner].nome}) · rotação=${CRE[cR].nome} · oráculo=${CRE[cO].nome} · interações A/R/O = ${hp[0]}/${hp[1]}/${hp[2]}`);
     }
     tt.cur[0]=cA;tt.cur[1]=cR;tt.cur[2]=cO;
+    if(hE)emitirEvento(tt,cA,t,hE);
     if(hp[0]>0&&S.pulses.length<80)S.pulses.push({i,t0:performance.now()});
   }
   S.t+=30;S.step++;

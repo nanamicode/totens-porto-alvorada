@@ -45,6 +45,7 @@ O algoritmo só usa o que um totem real teria: contagem, perfil estimado e inter
 site/index.html                 estrutura da página
 site/css/styles.css             estilos (tema claro e escuro)
 site/js/util.js                 gerador aleatório, Gamma, Beta e Poisson
+site/js/eventos.js              formato, criação e validação do evento de spot
 site/js/config.js               segmentos, criativos, zonas, parâmetros e cenários
 site/js/world.js                estado global e criação da cidade e dos totens
 site/js/brain.js                algoritmo: Thompson Sampling hierárquico (independente do navegador)
@@ -59,11 +60,14 @@ tools/bundle.py                 junta tudo em dist/totens.html (arquivo único)
 examples/brain-demo.js          o Brain rodando no Node, com um mundo mínimo
 tests/brain.test.js             testes do Brain isolado
 tests/algoritmo.test.js         testes do algoritmo no simulador completo, com várias sementes
+tests/eventos.test.js           testes do formato de evento
 tools/headless.js               roda o simulador sem navegador
 tools/avaliar.js                comando de avaliação com várias sementes
+tools/exportar-eventos.js       gera eventos de spot do simulador em JSON Lines
 prototipo/bandit_criativos.py   primeiro protótipo em Python, sem interface
 docs/ALGORITMO.md               fórmulas e hipóteses
 docs/AVALIACAO.md               como avaliar e resultados de referência
+docs/EVENTOS.md                 formato de evento do totem (com JSON Schema e exemplos)
 docs/ROADMAP.md                 próximos passos
 ```
 
