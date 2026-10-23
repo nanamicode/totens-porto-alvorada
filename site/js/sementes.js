@@ -13,7 +13,7 @@ const estat=v=>{
 function resumoDaSemente(seed,r){
   const [alg,rot,orc]=r.interacoes;
   return {seed,ganho:alg/rot-1,efAlgoritmo:alg/orc,efRotacao:rot/orc,
-    acertos:r.melhor.filter((c,s)=>c===r.verdade[s]).length,perfis:r.melhor.length,olhares:r.olhares};
+    acertos:r.melhor.filter((c,s)=>c===r.verdade[s]).length,perfis:r.melhor.length,olhares:r.olhares,interacoes:alg};
 }
 
 /* opt.sementes, opt.passos (spots de 30 s), opt.aoProgredir(fração, semente atual) */

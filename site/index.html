@@ -134,6 +134,28 @@
     <textarea id="loteCsvArea" readonly hidden rows="6" aria-label="CSV para copiar"></textarea>
   </section>
 
+  <section class="card comparar" aria-label="Comparar configurações">
+    <h2>Comparar duas configurações</h2>
+    <p class="hint">Roda as mesmas cidades (mesmas sementes, mesma audiência) com duas configurações do algoritmo e mostra quem rende mais, com a diferença e o erro. A simulação ao vivo fica parada durante a execução e volta como estava.</p>
+    <div class="cmp-lados">
+      <div class="cmp-lado" id="cmpA"></div>
+      <div class="cmp-lado" id="cmpB"></div>
+    </div>
+    <div class="lote-controls">
+      <label>Sementes <select id="cmpSem"><option value="4">4</option><option value="6" selected>6</option><option value="10">10</option></select></label>
+      <label>Duração <select id="cmpDur"><option value="6">6 horas</option><option value="12" selected>12 horas</option><option value="24">1 dia</option></select></label>
+      <label>Efeito do horário no mundo <select id="cmpHor"><option value="1" selected>padrão</option><option value="2">2 vezes</option><option value="3">3 vezes</option></select></label>
+      <label>Desgaste do mundo <select id="cmpDes"><option value="1" selected>padrão</option><option value="2.5">2,5 vezes</option></select></label>
+      <button class="btn primary" id="btnCmp" type="button">Comparar</button>
+      <button class="btn" id="btnCmpCancel" type="button" hidden>Cancelar</button>
+      <button class="btn" id="btnCmpCsv" type="button" hidden>Copiar CSV</button>
+    </div>
+    <progress id="cmpProg" max="1" value="0" hidden></progress>
+    <p class="hint" id="cmpMsg" aria-live="polite"></p>
+    <div id="cmpRes"><p class="hint">Ainda não rodou. Escolha uma receita para cada lado (ou edite os campos) e aperte Comparar. Cada semente roda duas vezes, então 6 sementes de 12 horas levam cerca de 15 a 20 segundos. O cenário e as campanhas pausadas de agora valem para os dois lados.</p></div>
+    <textarea id="cmpCsvArea" readonly hidden rows="6" aria-label="CSV para copiar"></textarea>
+  </section>
+
   <section class="lower">
 
     <div class="card">
@@ -228,6 +250,7 @@
   </div>
 </aside>
 <script src="js/util.js"></script>
+<script src="js/comparacao.js"></script>
 <script src="js/eventos.js"></script>
 <script src="js/config.js"></script>
 <script src="js/world.js"></script>
@@ -239,6 +262,7 @@
 <script src="js/calc.js"></script>
 <script src="js/network.js"></script>
 <script src="js/sementes.js"></script>
+<script src="js/comparar.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>
