@@ -62,6 +62,21 @@ qualidade: o parâmetro qnovo multiplica a taxa verdadeira do criativo no moment
 
 O lançamento é uma mudança do tipo `campanha` com índice 7, então entra nos cenários salvos e se refaz igual. Uma cidade nova (Reiniciar) volta sem o criativo lançado. Medição em `tools/lancar.js`.
 
+## Metas de entrega por anunciante
+
+Cada campanha tem uma **meta de olhares por dia** e um **orçamento por dia** (R$; a 18 R$ por mil olhares, 10% acima do custo da meta). Elas valem para o algoritmo, a rotação e o oráculo na hora de medir. O cumprimento é a parte da meta que foi entregue, até o limite da meta, somada nos dias completos (a cidade começa às 06:00, então o primeiro dia não conta). O criativo reservado não tem meta.
+
+Com `ritmo` maior que zero o operador passa a **equilibrar desempenho e entrega**: dá a cada campanha um peso na escolha do algoritmo, que multiplica o valor esperado de cada criativo (`Brain.create({peso})`; 0 tira a campanha da escolha):
+
+```
+ρ = (fração da meta que falta) ÷ (fração do tráfego do dia que falta)       1 = no ritmo, acima de 1 = atrasada, abaixo = adiantada
+peso = ρ^ritmo, entre 0,2 e 3
+orçamento do dia esgotado (olhares entregues ≥ orçamento ÷ preço por mil) = peso 0 até a meia-noite
+tráfego do dia que falta: usa o total do último dia completo; no primeiro dia, supõe que as metas somam 80% da capacidade
+```
+
+Com `ritmo = 0` (padrão) os pesos valem 1 e o resultado é idêntico ao de antes. `metaEsc` multiplica todas as metas e orçamentos. Medição em `tools/metas.js`. O peso entra só na escolha: o aprendizado continua medindo o desempenho de cada criativo, sem o peso.
+
 ## Referências e métrica
 
 ```

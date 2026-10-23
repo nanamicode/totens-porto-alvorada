@@ -6,7 +6,7 @@
   if(typeof module==='object'&&module.exports)module.exports=factory();
   else root.Cenario=factory();
 })(typeof self!=='undefined'?self:globalThis,function(){
-  const PARAMS=['acc','kz','kt','rest','forget','look','cpm','val','corrige','estima','contexto','kp','atraso','espera','qnovo'];
+  const PARAMS=['acc','kz','kt','rest','forget','look','cpm','val','corrige','estima','contexto','kp','atraso','espera','qnovo','ritmo','metaEsc'];
   const EVENTOS=['chuva','show','greve','feriado'];
   const N_CRIATIVOS=7,N_CAMPANHAS=8,MAX_PASSOS=43200,MAX_MUDANCAS=2000,MAX_LINK=6000;
   const inteiro=(v,a,b)=>Number.isInteger(v)&&v>=a&&v<=b;

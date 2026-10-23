@@ -156,6 +156,25 @@ O que isso diz, neste mundo simulado:
 - **Um criativo fraco custa pouco**: ocupa 0,3% dos spots em 48 h. O custo do teste é pequeno neste mundo.
 - Seis sementes e um criativo novo só (um criativo forte no parque, no comércio e no campus à tarde). Outro perfil de criativo, ou um lançamento com a rede já saturada de desgaste, pode se comportar diferente: não medi. A "adoção" é uma definição minha, com janela de 30 min e limiar de 80%.
 
+**Metas de entrega por anunciante (issue 8).** `npm run metas` compara o desempenho com o cumprimento das metas. 5 sementes, 4 dias (3 completos), metas de 420 mil olhares por dia para uma rede que gera cerca de 520 mil. "Metas cumpridas" é a parte da meta entregue, até o limite da meta, ponderada pelo tamanho da meta; "mais atrasada" é a pior campanha:
+
+| | Ganho de interações sobre a rotação | Metas cumpridas | Campanha mais atrasada | Olhares além do orçamento |
+|---|---|---|---|---|
+| Só desempenho (`ritmo` 0) | 26,0% | 81,8% | 47,4% | 28,9% |
+| Só o teto de orçamento (`ritmo` 0,001, quase sem peso) | 12,0% | 100% | 100% | 10,2% |
+| `ritmo` 0,25 | 14,4% | 100% | 100% | 10,2% |
+| `ritmo` 0,5 | 15,2% | 100% | 100% | 10,2% |
+| `ritmo` 1 | 15,4% | 100% | 100% | 10,2% |
+| `ritmo` 2 | 14,9% | 100% | 100% | 10,2% |
+| Rotação fixa, sem metas | (referência) | 90,1% | 74,2% | 22,2% |
+
+O que isso diz, neste mundo simulado:
+- **O desempenho puro não cumpre as metas**: o algoritmo concentra os spots nas campanhas que mais rendem e deixa a pior com menos da metade do contratado. Até a rotação fixa cumpre mais (90,1%), por ser uniforme.
+- **Cumprir as metas custa cerca de 10 pontos de ganho** (de 26% para 15,4%), e o algoritmo continua bem à frente da rotação.
+- **Parte do efeito vem só do teto de orçamento** (que tira do jogo quem já gastou). O peso por ritmo recupera 3 pontos de ganho sobre o teto sozinho (12% para 15,4%), porque segura as campanhas fortes ao longo do dia em vez de queimar o orçamento cedo e forçar as fracas no fim. A força 1 é o melhor ponto medido; a 2 já perde um pouco.
+- **Olhares além do orçamento**: 10,2% é praticamente o mínimo possível aqui, porque os orçamentos somam menos do que a capacidade da rede (cerca de 462 mil olhares contra 520 mil): sobra tráfego que alguém precisa exibir. Sem equilíbrio, o algoritmo entrega 28,9% além do que os anunciantes pagam.
+- Cinco sementes e um conjunto de metas. Metas maiores que a capacidade (use `metaEsc`) não podem ser cumpridas por ninguém, e o que o equilíbrio faz nesse caso (reparte o atraso) não foi medido. As metas, o orçamento e o 80% do primeiro dia são escolhas minhas, não dados reais.
+
 ## Limites
 
 - O mundo simulado é o mesmo em que o algoritmo foi desenvolvido. Os números provam que o algoritmo funciona nele, e não que funcionará em campo.
