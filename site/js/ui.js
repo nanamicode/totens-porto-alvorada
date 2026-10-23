@@ -28,7 +28,7 @@ function renderPanel(){
   const scr=$('scr');scr.style.setProperty('--c1',cr.cor);scr.style.setProperty('--c2','#101820');
   $('scrN').textContent=cr.nome;$('scrT').textContent=cr.tag;$('scrQ').style.backgroundImage=qrURL(c+1);
   $('pAud').textContent=tt.lastN===0?'ninguém olhando':`${tt.lastN} ${tt.lastN===1?'pessoa':'pessoas'}`;
-  const e=tt.E[0][c],f=.35+.65*Math.exp(-PRM.rest*e/600),des=(1-f)/.65;
+  const e=brain.exposure(tt.id)[c],des=brain.wear(tt.id,c);
   $('pFat').style.width=(des*100)+'%';
   $('pFatT').textContent=`Desgaste estimado do criativo atual: ${Math.round(des*100)}% (exposição recente: ${fmt(e)} olhares)`;
   let tot=0;for(let s=0;s<NS;s++)tot+=tt.recent[s];
@@ -38,7 +38,7 @@ function renderPanel(){
   const hn=Math.floor((S.t/3600)%24);
   $('pHours').innerHTML=hv.map((v,h)=>`<i class="${h===hn?'now':''}" style="height:${Math.max(4,v/mx*100)}%" title="${h}h · ${v.toLocaleString('pt-BR',{maximumFractionDigits:1})}"></i>`).join('');
   const order=Array.from({length:NS},(_,s)=>s).sort((a,b)=>tt.recent[b]-tt.recent[a]).slice(0,3);
-  $('pLearn').innerHTML=order.map(s=>{let bc=0,bm=-1;for(let k=0;k<NC;k++){const m=effMean(tt.id,s,k);if(m>bm){bm=m;bc=k;}}
+  $('pLearn').innerHTML=order.map(s=>{let bc=0,bm=-1;for(let k=0;k<NC;k++){const m=brain.mean(tt.id,s,k);if(m>bm){bm=m;bc=k;}}
     return `<div><i style="background:${CRE[bc].cor}"></i><span>${segLabel(s)} → ${CRE[bc].nome}</span><b>${pc(bm)}</b></div>`;}).join('');
   $('pA').textContent=per1k(tt.eng[0],tt.views);$('pR').textContent=per1k(tt.eng[1],tt.views);
 }
@@ -60,7 +60,7 @@ function effSeries(p){
   return out;
 }
 function renderHeat(){
-  const G=B.G,rows=[],truth=s=>c=>{const cr=CRE[c];let m=0;ZONES.forEach(z=>m+=cr.zone[z.id]??1);return cr.base*cr.age[s&3]*cr.gen[s>>2]*m/ZONES.length;};
+  const G=brain.cells.G,rows=[],truth=s=>c=>{const cr=CRE[c];let m=0;ZONES.forEach(z=>m+=cr.zone[z.id]??1);return cr.base*cr.age[s&3]*cr.gen[s>>2]*m/ZONES.length;};
   let mx=.001;const val=[];
   for(let s=0;s<NS;s++){val.push([]);for(let c=0;c<NC;c++){const k=s*NC+c,v=(G.a[k]+.2)/(G.n[k]+10);val[s].push(v);if(v>mx)mx=v;}}
   let h='<table class="heat"><thead><tr><th></th>'+CRE.map(c=>`<th><i style="background:${c.cor}"></i>${c.nome.split(' ')[0]}</th>`).join('')+'</tr></thead><tbody>';

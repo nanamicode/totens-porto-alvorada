@@ -15,7 +15,7 @@ function zoneBest(){
     const sh=new Float64Array(NS);let tot=0;
     S.totems.forEach(t=>{if(t.zi===zi)for(let s=0;s<NS;s++){sh[s]+=t.recent[s];tot+=t.recent[s];}});
     if(tot<=0)return null;
-    const Zc=B.Z[zi],G=B.G,sc=[];
+    const Zc=brain.cells.Z[zi],G=brain.cells.G,sc=[];
     for(let c=0;c<NC;c++){let v=0;for(let s=0;s<NS;s++){const k=s*NC+c,gm=(G.a[k]+.2)/(G.n[k]+10);v+=sh[s]/tot*(Zc.a[k]+PRM.kz*gm)/(Zc.n[k]+PRM.kz);}sc.push(v);}
     const order=[...sc.keys()].filter(c=>CON[c]).sort((a,b)=>sc[b]-sc[a]);
     let dom=0;for(let s=1;s<NS;s++)if(sh[s]>sh[dom])dom=s;
@@ -38,7 +38,7 @@ function renderNet(){
   const rk=x=>`<button type="button" class="rk" data-t="${x.t.id}"><span>${x.t.nome}<small style="color:var(--muted)"> · ${ZONES[x.t.zi].nome}</small></span><b class="${x.g>=0?'up':'dn'}">${(x.g>=0?'+':'')+f2(x.g*100,0)}%</b></button>`;
   $('rankBody').innerHTML=eligible.length?'<h3 class="mini">Maiores ganhos</h3>'+eligible.slice(0,4).map(rk).join('')+'<h3 class="mini">Menores ganhos</h3>'+eligible.slice(-4).reverse().map(rk).join(''):'<p class="hint">Reunindo dados…</p>';
   const wear=[];
-  S.totems.forEach(t=>{for(let c=0;c<NC;c++){const e=t.E[0][c],f=.35+.65*Math.exp(-PRM.rest*e/600),d=(1-f)/.65;if(d>.25)wear.push({t,c,d});}});
+  S.totems.forEach(t=>{for(let c=0;c<NC;c++){const d=brain.wear(t.id,c);if(d>.25)wear.push({t,c,d});}});
   wear.sort((a,b)=>b.d-a.d);
   $('wearBody').innerHTML=wear.length?wear.slice(0,4).map(w=>`<button type="button" class="rk" data-t="${w.t.id}"><i class="dot" style="background:${CRE[w.c].cor}"></i><span>${w.t.nome} · ${CRE[w.c].nome}</span><b class="dn">${Math.round(w.d*100)}%</b></button>`).join(''):'<p class="hint">Nenhum criativo passa de 25% de desgaste.</p>';
 }
