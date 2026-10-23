@@ -55,9 +55,13 @@ site/js/network.js              painel da rede, cenários e campanhas
 site/js/main.js                 laço de animação, controles e início
 tools/bundle.py                 junta tudo em dist/totens.html (arquivo único)
 examples/brain-demo.js          o Brain rodando no Node, com um mundo mínimo
-tests/brain.test.js             testes do Brain (npm test)
+tests/brain.test.js             testes do Brain isolado
+tests/algoritmo.test.js         testes do algoritmo no simulador completo, com várias sementes
+tools/headless.js               roda o simulador sem navegador
+tools/avaliar.js                comando de avaliação com várias sementes
 prototipo/bandit_criativos.py   primeiro protótipo em Python, sem interface
 docs/ALGORITMO.md               fórmulas e hipóteses
+docs/AVALIACAO.md               como avaliar e resultados de referência
 docs/ROADMAP.md                 próximos passos
 ```
 
@@ -68,8 +72,9 @@ Os scripts são carregados na ordem de `site/index.html` e compartilham o escopo
 `site/js/brain.js` e `site/js/util.js` não dependem de navegador nem do mundo simulado. No Node (18 ou mais novo, sem instalar nada):
 
 ```bash
-npm run demo    # o Brain aprendendo num mundo mínimo
-npm test        # testes do Brain
+npm run demo     # o Brain aprendendo num mundo mínimo
+npm test         # testes do Brain e do algoritmo no simulador completo (cerca de 35 s)
+npm run avaliar  # ganho médio e variação em 10 sementes (cerca de 25 s)
 ```
 
 Uso em código:

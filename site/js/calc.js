@@ -63,10 +63,10 @@ function renderPost(){
   const tt=S.totems[sel],lvl=$('postLvl').value,G=brain.cells.G,Zc=brain.cells.Z[tt.zi],T=brain.cells.T[sel];
   let mx=.001;const cell=[];
   for(let s=0;s<NS;s++){cell.push([]);for(let c=0;c<NC;c++){
-    const k=s*NC+c,gm=(G.a[k]+.2)/(G.n[k]+10),zm=(Zc.a[k]+PRM.kz*gm)/(Zc.n[k]+PRM.kz);
+    const k=s*NC+c,gm=brain.globalMean(s,c),zm=brain.zoneMean(tt.zi,s,c);
     let m,sd,n;
     if(lvl==='rede'){m=gm;n=G.n[k];sd=Math.sqrt(m*(1-m)/(n+10));}
-    else if(lvl==='zona'){m=zm;n=Zc.n[k];sd=Math.sqrt(m*(1-m)/(n+PRM.kz));}
+    else if(lvl==='zona'){m=zm;n=Zc.n[k];sd=Math.sqrt(m*(1-m)/Math.max(n+PRM.kz,1));}
     else{const a=T.a[k]+PRM.kt*zm,b=T.n[k]-T.a[k]+PRM.kt*(1-zm);m=a/(a+b);sd=Math.sqrt(a*b/((a+b)*(a+b)*(a+b+1)));n=T.n[k];}
     cell[s].push({m,sd,n});if(m>mx)mx=m;}}
   const rows=cell.map((r,s)=>{let bi=0;r.forEach((x,c)=>{if(x.m>r[bi].m)bi=c;});

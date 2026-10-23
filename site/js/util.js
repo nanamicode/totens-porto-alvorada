@@ -11,7 +11,12 @@
   function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
   const norm=r=>{let u=0;while(u===0)u=r();return Math.sqrt(-2*Math.log(u))*Math.cos(6.283185307*r());};
   function gammaS(k,r){if(k<1)return gammaS(k+1,r)*Math.pow(r(),1/k);const d=k-1/3,c=1/Math.sqrt(9*d);for(;;){let x,v;do{x=norm(r);v=1+c*x;}while(v<=0);v=v*v*v;const u=r();if(u<1-.0331*x*x*x*x||Math.log(u)<.5*x*x+d*(1-v+Math.log(v)))return d*v;}}
-  function betaS(a,b,r){if(a+b>60){const m=a/(a+b),sd=Math.sqrt(m*(1-m)/(a+b+1));return clamp(m+sd*norm(r),1e-4,.5);}const x=gammaS(a,r),y=gammaS(b,r);return x/(x+y);}
+  function betaS(a,b,r){if(a+b>60){const m=a/(a+b),sd=Math.sqrt(m*(1-m)/(a+b+1));return clamp(m+sd*norm(r),1e-4,.5);}const x=gammaS(a,r),y=gammaS(b,r);return x+y>0?x/(x+y):a/(a+b);}
   function poisson(l,r){const L=Math.exp(-l);let k=0,p=1;do{k++;p*=r();}while(p>L&&k<60);return k-1;}
-  return {pk,clamp,mulberry32,norm,gammaS,betaS,poisson};
+  /* formatação em português do Brasil (usada pela simulação, pelo registro e pela interface) */
+  const f2=(x,d=2)=>Number(x).toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d});
+  const fmt=n=>Math.round(n).toLocaleString('pt-BR');
+  const pc=(x,d=1)=>(x*100).toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d})+'%';
+  const per1k=(e,v)=>v>0?(1000*e/v).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1}):'–';
+  return {pk,clamp,mulberry32,norm,gammaS,betaS,poisson,f2,fmt,pc,per1k};
 });

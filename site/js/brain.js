@@ -13,6 +13,7 @@
 })(typeof self!=='undefined'?self:globalThis,function(U){
   const {betaS}=U;
   const DEFAULTS={kz:40,kt:60,rest:.4,forget:.985};
+  const MIN_BETA=1e-3;     // evita Beta(0, b), que não existe, quando os priors são zerados e ainda não há dados
 
   /* opt.nSeg, opt.nCre   número de perfis e de criativos
      opt.zoneOf           zona de cada totem (array de índices)
@@ -32,10 +33,15 @@
     const wearOf=(e)=>1-Math.exp(-P.rest*e/600);          // desgaste estimado, de 0 a 1
     const fatOf=e=>.35+.65*Math.exp(-P.rest*e/600);       // fator multiplicativo sobre a taxa
 
+    /* média de toda a rede, com um prior fraco de 2% */
+    const globalMean=(s,c)=>{const k=s*NC+c;return (G.a[k]+.2)/(G.n[k]+10);};
+    /* média da zona, puxada para a da rede com força kz; sem dados e sem prior, vale a da rede */
+    const zoneMean=(z,s,c)=>{const k=s*NC+c,gm=(G.a[k]+.2)/(G.n[k]+10),d=Z[z].n[k]+P.kz;return d>0?(Z[z].a[k]+P.kz*gm)/d:gm;};
+
     function mean(i,s,c){
-      const k=s*NC+c,Zc=Z[zoneOf[i]],t=T[i];
-      const gm=(G.a[k]+.2)/(G.n[k]+10),zm=(Zc.a[k]+P.kz*gm)/(Zc.n[k]+P.kz);
-      return (t.a[k]+P.kt*zm)/(t.n[k]+P.kt);
+      const k=s*NC+c,t=T[i],zm=zoneMean(zoneOf[i],s,c);
+      const d=t.n[k]+P.kt;
+      return d>0?(t.a[k]+P.kt*zm)/d:zm;      // sem prior e sem dados, vale a média da zona
     }
 
     /* aud: audiência por perfil (contagens) · tot: total que divide a audiência · rec: objeto opcional que recebe cada cálculo */
@@ -48,8 +54,8 @@
         for(let c=0;c<NC;c++){
           if(!active[c]){if(rec)rec.cells[s][c]={gm:0,zm:0,a:0,b:0,th:0,gn:0,zn:0,tn:0};continue;}
           const k=s*NC+c;
-          const gm=(G.a[k]+.2)/(G.n[k]+10),zm=(Zc.a[k]+P.kz*gm)/(Zc.n[k]+P.kz);
-          const a=t.a[k]+P.kt*zm,b=t.n[k]-t.a[k]+P.kt*(1-zm),th=betaS(a,b,rng);
+          const gm=globalMean(s,c),zm=zoneMean(zoneOf[i],s,c);
+          const a=Math.max(t.a[k]+P.kt*zm,MIN_BETA),b=Math.max(t.n[k]-t.a[k]+P.kt*(1-zm),MIN_BETA),th=betaS(a,b,rng);
           score[c]+=n*th;
           if(rec)rec.cells[s][c]={gm,zm,a,b,th,gn:G.n[k],zn:Zc.n[k],tn:t.n[k]};
         }
@@ -84,7 +90,7 @@
     function expose(i,c,n){E[i][c]+=n;}
     function decay(f){for(let i=0;i<E.length;i++){const e=E[i];for(let c=0;c<NC;c++)e[c]*=f;}}
 
-    return {choose,learn,forget,mean,expose,decay,
+    return {choose,learn,forget,mean,globalMean,zoneMean,expose,decay,
       wear:(i,c)=>wearOf(E[i][c]),exposure:i=>E[i],active,cells:{T,Z,G},params:P};
   }
   return {create,DEFAULTS};

@@ -6,6 +6,7 @@
   "scripts": {
     "test": "node --test",
     "demo": "node examples/brain-demo.js",
+    "avaliar": "node tools/avaliar.js",
     "bundle": "python tools/bundle.py"
   },
   "engines": {

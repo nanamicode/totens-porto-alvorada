@@ -77,3 +77,12 @@ test('o desgaste faz o Brain alternar criativos parecidos', () => {
   const { c } = brain.choose(0, aud, 5);
   assert.notEqual(c, 0);
 });
+
+test('funciona com os priors zerados, antes de haver qualquer dado', () => {
+  const brain = novo({ params: { kz: 0, kt: 0, rest: 0.4, forget: 0.985 } });
+  const aud = new Float64Array(NS); aud[0] = 3;
+  const { c, exp } = brain.choose(0, aud, 3);
+  assert.ok(c >= 0 && c < NC, `criativo inválido: ${c}`);
+  assert.ok(Number.isFinite(exp));
+  for (let s = 0; s < NS; s++) for (let k = 0; k < NC; k++) assert.ok(Number.isFinite(brain.mean(0, s, k)));
+});
