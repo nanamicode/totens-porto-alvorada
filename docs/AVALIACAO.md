@@ -30,6 +30,26 @@ A seção **Variação entre sementes**, abaixo do painel da rede, faz o mesmo n
 - 10 sementes de 1 dia levam cerca de 20 a 30 segundos.
 - As sementes são as mesmas de `npm run avaliar`, mas os números não batem dígito por dígito: a mesma semente reproduz o mesmo dia só no mesmo ambiente. Entre o Node e o navegador, as primeiras centenas de spots coincidem e depois as trajetórias se afastam, por diferenças de arredondamento das funções matemáticas. Em média os resultados concordam: com 10 sementes de 1 dia, o ganho foi de 24,0% no navegador e de 24,1% no Node.
 
+## Comparar duas configurações
+
+Para saber se um parâmetro realmente ajuda, compare duas configurações **nas mesmas sementes**. Cada semente tem a mesma audiência para as duas (o algoritmo não mexe no sorteio do mundo), então a diferença de cada semente é só efeito da configuração, e o erro da diferença fica bem menor que o de duas médias separadas.
+
+No site, a seção **Comparar duas configurações** deixa escolher uma receita para cada lado (ou editar os campos), o número de sementes, a duração, o efeito do horário e o desgaste do mundo. O cenário e as campanhas pausadas de agora valem para os dois lados. Mostra o veredito, o ganho, a eficiência, o custo por interação e os perfis certos de cada lado, a diferença B − A com o erro padrão, um gráfico semente a semente e a tabela, com CSV. A simulação ao vivo fica parada e volta como estava.
+
+No terminal:
+
+```bash
+npm run comparar -- --a=padrao --b=sem-compartilhar
+npm run comparar -- --a=padrao --b=kz=0,kt=0 --sementes=8 --passos=1440
+npm run comparar -- --a=padrao --b=com-horario --horario=3 --sementes=6
+```
+
+Receitas: `padrao`, `sem-compartilhar`, `sem-desgaste`, `desgaste-zero`, `com-horario`, `camera-ruim` e `nunca-esquece`. Ou campos sobre o padrão: `acc`, `kz`, `kt`, `rest`, `forget`, `corrige`, `estima`, `contexto`, `kp`.
+
+O veredito diz **sem diferença clara** quando a diferença média fica abaixo de 2 erros padrão. Com menos de 3 sementes, diz que são poucas para concluir. Duas configurações iguais dão diferença exatamente zero, e um teste garante isso.
+
+Exemplo, 4 sementes de 6 horas, padrão contra sem compartilhar o aprendizado: o ganho cai de 19,5% para 7,0%, uma diferença de −12,5 pontos com erro padrão de 0,4. No navegador, com as mesmas 4 sementes, deu −11,3 ± 1,0: os dois concordam no sentido e na ordem de grandeza, mas não dígito por dígito (veja "No site").
+
 ## Resultado de referência
 
 10 sementes, 1 dia simulado cada (a partir das 06:00 de segunda), parâmetros padrão:

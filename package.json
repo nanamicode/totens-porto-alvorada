@@ -8,6 +8,7 @@
     "demo": "node examples/brain-demo.js",
     "avaliar": "node tools/avaliar.js",
     "eventos": "node tools/exportar-eventos.js",
+    "comparar": "node tools/comparar.js",
     "servidor": "node tools/servidor.js",
     "bundle": "python tools/bundle.py"
   },
