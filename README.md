@@ -41,11 +41,25 @@ O algoritmo só usa o que um totem real teria: contagem, perfil estimado e inter
 ## Estrutura
 
 ```
-site/index.html                 simulador completo, em um único arquivo
+site/index.html                 estrutura da página
+site/css/styles.css             estilos (tema claro e escuro)
+site/js/util.js                 gerador aleatório, Gamma, Beta e Poisson
+site/js/config.js               segmentos, criativos, zonas, parâmetros e cenários
+site/js/world.js                estado global e criação da cidade e dos totens
+site/js/brain.js                algoritmo: Thompson Sampling hierárquico
+site/js/sim.js                  passo de 30 s: mundo, algoritmo, rotação e oráculo
+site/js/map.js                  mapa em canvas
+site/js/ui.js                   painel do totem, indicadores e gráfico
+site/js/calc.js                 menu de cálculos
+site/js/network.js              painel da rede, cenários e campanhas
+site/js/main.js                 laço de animação, controles e início
+tools/bundle.py                 junta tudo em dist/totens.html (arquivo único)
 prototipo/bandit_criativos.py   primeiro protótipo em Python, sem interface
 docs/ALGORITMO.md               fórmulas e hipóteses
 docs/ROADMAP.md                 próximos passos
 ```
+
+Os scripts são carregados na ordem de `site/index.html` e compartilham o escopo global do navegador. Isso mantém o site funcionando ao abrir o arquivo direto, sem servidor. Para gerar um arquivo único, rode `python tools/bundle.py`.
 
 ## Privacidade
 
