@@ -144,3 +144,41 @@ test('sem contexto de horário, os multiplicadores valem 1', () => {
     params: { kz: 40, kt: 60, rest: 0.4, forget: 0.985, corrige: 1, estima: 0, contexto: 0, kp: 10 } });
   for (let q = 0; q < 4; q++) assert.equal(brain.periodFactor(0, q), 1);
 });
+
+test('aprender em lote dá as mesmas contagens que uma pessoa de cada vez', () => {
+  const p = { kz: 40, kt: 60, rest: 0.4, forget: 0.985, corrige: 1, estima: 0, contexto: 0 };
+  const um = novo({ params: p }), lote = novo({ params: p });
+  for (const b of [um, lote]) b.expose(0, 1, 800);
+  for (let k = 0; k < 7; k++) um.learn(0, 1, 1, k < 2);
+  lote.learnLote(0, 1, 1, 7, 2);
+  const k = 1 * NC + 1;
+  assert.equal(lote.cells.T[0].n[k], um.cells.T[0].n[k]);
+  assert.ok(Math.abs(lote.cells.T[0].a[k] - um.cells.T[0].a[k]) < 1e-12);
+  assert.ok(Math.abs(lote.cells.G.a[k] - um.cells.G.a[k]) < 1e-12);
+});
+
+test('o lote aceita interações fracionárias e nunca passa do número de pessoas', () => {
+  const brain = novo({ params: { kz: 40, kt: 60, rest: 0, forget: 0.985, corrige: 0, estima: 0 } });
+  brain.learnLote(0, 0, 0, 4, 1.5);
+  assert.equal(brain.cells.T[0].a[0], 1.5);
+  brain.learnLote(0, 0, 1, 2, 9);
+  assert.equal(brain.cells.T[0].a[1], 2);
+  assert.equal(brain.learnLote(0, 0, 2, 0, 0), 0);
+  assert.equal(brain.cells.T[0].n[2], 0);
+});
+
+test('o estado aprendido se exporta e se importa sem perder nada', () => {
+  const p = { kz: 40, kt: 60, rest: 0.4, forget: 0.985, corrige: 1, estima: 1, contexto: 0 };
+  const a = novo({ params: p }), rng = mulberry32(3);
+  a.expose(0, 1, 500);
+  for (let k = 0; k < 300; k++) a.learn(k % 2, k % 2, k % 3, rng() < 0.05);
+  a.decay(0.9);
+  const guardado = JSON.parse(JSON.stringify(a.exportar()));
+  const b = novo({ params: p });
+  b.importar(guardado);
+  for (let s = 0; s < NS; s++) for (let c = 0; c < NC; c++) assert.equal(b.mean(0, s, c), a.mean(0, s, c));
+  assert.equal(b.rest(0), a.rest(0));
+  assert.deepEqual(Array.from(b.exposure(0)), Array.from(a.exposure(0)));
+  const outro = Brain.create({ nSeg: NS, nCre: NC + 1, nZones: 1, zoneOf: [0, 0], rng: mulberry32(1) });
+  assert.throws(() => outro.importar(guardado), /não combina/);
+});

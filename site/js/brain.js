@@ -112,6 +112,24 @@
       return inc;
     }
 
+    /* varias pessoas de uma vez: n olhares do perfil seg, com `hits` interações (pode ser fracionário,
+       quando só se sabe o total e a repartição entre perfis é estimada). Para n = 1 faz o mesmo que learn. */
+    function learnLote(i,seg,c,n,hits,per){
+      if(!(n>0))return 0;
+      hits=Math.min(Math.max(hits,0),n);
+      const k=seg*NC+c,t=T[i],Zc=Z[zoneOf[i]],e=E[i][c],f=fat(rest(i),e),m=mult(c,per);
+      const inc=hits/((P.corrige?f:1)*m);
+      t.n[k]+=n;Zc.n[k]+=n;G.n[k]+=n;
+      t.a[k]+=inc;Zc.a[k]+=inc;G.a[k]+=inc;
+      if(P.contexto&&NP>1&&per!=null&&!perFn){const q=per*NC+c;Mh[q]+=hits*(P.corrige?1/f:1);Mx[q]+=n*globalMean(seg,c);}
+      if(P.estima){
+        if(i!==mi||c!==mc||e!==me){mi=i;mc=c;me=e;for(let g=0;g<GRADE.length;g++)mf[g]=fat(GRADE[g],e);}
+        const b=(G.a[k]+.2)/(G.n[k]+10),L=ll[i];
+        for(let g=0;g<GRADE.length;g++){const p=Math.min(Math.max(b*m*mf[g],1e-4),.5);L[g]+=hits*Math.log(p)+(n-hits)*Math.log(1-p);}
+      }
+      return inc;
+    }
+
     /* chamar uma vez por hora */
     function forget(){
       const f=P.forget;
@@ -140,8 +158,22 @@
       }
     }
 
-    return {choose,learn,forget,mean,globalMean,zoneMean,expose,decay,
-      wear:(i,c)=>wearOf(i,E[i][c]),rest,setRest:fn=>{restFn=fn;},setPeriodFactor:fn=>{perFn=fn;},periodFactor:mult,periods:NP,exposure:i=>E[i],active,cells:{T,Z,G},params:P};
+    /* tudo o que o algoritmo aprendeu, em listas simples (JSON). importar exige o mesmo número de totens, zonas, perfis e criativos. */
+    const lista=a=>Array.from(a);
+    function exportar(){
+      const par=m=>({a:lista(m.a),n:lista(m.n)});
+      return {versao:1,nSeg:NS,nCre:NC,nPeriods:NP,T:T.map(par),Z:Z.map(par),G:par(G),E:E.map(lista),ll:ll.map(lista),rHat:lista(rHat),Mh:lista(Mh),Mx:lista(Mx),Mn:lista(Mn)};
+    }
+    function importar(s){
+      if(!s||s.versao!==1||s.nSeg!==NS||s.nCre!==NC||s.nPeriods!==NP||s.T.length!==T.length||s.Z.length!==Z.length)
+        throw new Error('o estado salvo não combina com este Brain (totens, zonas, perfis, criativos ou períodos diferentes)');
+      const poe=(m,o)=>{m.a.set(o.a);m.n.set(o.n);};
+      s.T.forEach((o,i)=>poe(T[i],o));s.Z.forEach((o,z)=>poe(Z[z],o));poe(G,s.G);
+      s.E.forEach((o,i)=>E[i].set(o));s.ll.forEach((o,i)=>ll[i].set(o));rHat.set(s.rHat);Mh.set(s.Mh);Mx.set(s.Mx);Mn.set(s.Mn);
+    }
+
+    return {choose,learn,learnLote,forget,mean,globalMean,zoneMean,expose,decay,
+      wear:(i,c)=>wearOf(i,E[i][c]),rest,setRest:fn=>{restFn=fn;},setPeriodFactor:fn=>{perFn=fn;},periodFactor:mult,periods:NP,exposure:i=>E[i],active,cells:{T,Z,G},params:P,exportar,importar};
   }
   return {create,DEFAULTS};
 });

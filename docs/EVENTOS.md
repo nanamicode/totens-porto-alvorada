@@ -63,7 +63,7 @@ O algoritmo aprende a taxa de interação de cada perfil, então precisa saber *
 - **Por perfil** (`interacoes` é um objeto com os 8 perfis). Vale quando o totem associa o toque na tela à pessoa à frente dele. É o que o simulador gera. Cada perfil deve ter no máximo tantas interações quanto pessoas em `audiencia`.
 - **Por spot** (`interacoes` é um inteiro com o total). Vale quando só se sabe que houve a interação, como na leitura de um QR em outro aparelho, ligada ao spot por um endereço curto. Aqui o perfil de quem interagiu é desconhecido.
 
-> **Limite conhecido.** O algoritmo atual só aprende com interações por perfil. Para receber o total por spot, ele precisa de uma regra para repartir as interações entre os perfis presentes (por exemplo, proporcional à audiência). Isso não está implementado. O simulador gera sempre por perfil, o que é otimista em relação a um totem só com QR.
+> **Interações só por spot.** O Operador ([OPERACAO.md](OPERACAO.md)) reparte o total entre os perfis presentes, ajustando a taxa de cada perfil por mínimos quadrados online. Aprende bem mais devagar que por perfil nas primeiras horas: os números estão em [OPERACAO.md](OPERACAO.md#quanto-o-formato-só-total-custa). O simulador gera sempre por perfil, o que é otimista em relação a um totem só com QR.
 
 ## Regras de qualidade
 
@@ -109,7 +109,7 @@ A `zona` agrupa totens parecidos: o algoritmo compartilha o aprendizado entre os
 | `inicio` | Período do dia, quando o contexto de horário está ligado. |
 | `totem` e o cadastro | Totem e zona do aprendizado. |
 
-O evento **fecha o ciclo depois do spot**. A decisão do próximo criativo também precisa de uma leitura em tempo real: quem está à frente do totem agora. Essa leitura não é um evento de spot e fica para a issue de ligar o algoritmo a totens reais.
+O evento **fecha o ciclo depois do spot**. A decisão do próximo criativo também precisa de uma leitura em tempo real: quem está à frente do totem agora. Essa leitura não é um evento de spot: o totem a envia na hora de decidir, pela rota `/decidir` do Operador ([OPERACAO.md](OPERACAO.md)).
 
 ## Como gerar eventos do simulador
 
