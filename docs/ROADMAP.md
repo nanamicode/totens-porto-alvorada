@@ -19,5 +19,5 @@
 
 ## Dados reais
 - [x] Definir o formato de evento do totem: contagem por perfil, criativo exibido e interações. Ver docs/EVENTOS.md.
-- [ ] Conectar `Brain` a eventos reais.
+- [x] Conectar `Brain` a eventos reais. Operador e servidor em docs/OPERACAO.md. Falta testar com um totem de verdade.
 - [ ] Revisão de privacidade e LGPD antes de qualquer instalação.

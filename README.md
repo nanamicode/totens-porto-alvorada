@@ -46,6 +46,7 @@ site/index.html                 estrutura da página
 site/css/styles.css             estilos (tema claro e escuro)
 site/js/util.js                 gerador aleatório, Gamma, Beta e Poisson
 site/js/eventos.js              formato, criação e validação do evento de spot
+site/js/operador.js             liga o algoritmo a eventos reais: decidir, registrar, guardar o estado
 site/js/config.js               segmentos, criativos, zonas, parâmetros e cenários
 site/js/world.js                estado global e criação da cidade e dos totens
 site/js/brain.js                algoritmo: Thompson Sampling hierárquico (independente do navegador)
@@ -58,16 +59,20 @@ site/js/sementes.js             várias sementes: ganho médio e variação
 site/js/main.js                 laço de animação, controles e início
 tools/bundle.py                 junta tudo em dist/totens.html (arquivo único)
 examples/brain-demo.js          o Brain rodando no Node, com um mundo mínimo
+examples/operador-demo.js       o Operador em malha fechada, só pela API pública
 tests/brain.test.js             testes do Brain isolado
 tests/algoritmo.test.js         testes do algoritmo no simulador completo, com várias sementes
 tests/eventos.test.js           testes do formato de evento
+tests/operador.test.js          testes do Operador e do servidor
 tools/headless.js               roda o simulador sem navegador
 tools/avaliar.js                comando de avaliação com várias sementes
 tools/exportar-eventos.js       gera eventos de spot do simulador em JSON Lines
+tools/servidor.js               servidor HTTP do Operador (protótipo)
 prototipo/bandit_criativos.py   primeiro protótipo em Python, sem interface
 docs/ALGORITMO.md               fórmulas e hipóteses
 docs/AVALIACAO.md               como avaliar e resultados de referência
 docs/EVENTOS.md                 formato de evento do totem (com JSON Schema e exemplos)
+docs/OPERACAO.md                como ligar o algoritmo a totens reais (Operador e servidor)
 docs/ROADMAP.md                 próximos passos
 ```
 
