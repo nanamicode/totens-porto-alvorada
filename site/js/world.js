@@ -6,6 +6,7 @@ const ne=new Float64Array(NS),nt=new Float64Array(NS);
 const vT=new Int8Array(64),vU=new Int8Array(64),vR=new Float64Array(64);
 
 function init(seed){
+  CON[RES]=false;      // uma cidade nova começa sem o criativo lançado
   rW=mulberry32(seed);rB=mulberry32(seed^0x9e3779b9);rC=mulberry32(seed^0x51ed270b);
   const totems=[];
   ZONES.forEach((z,zi)=>{

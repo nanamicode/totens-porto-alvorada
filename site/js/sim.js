@@ -10,7 +10,7 @@ function emitirEvento(tt,c,t,hE){
   if(EVENTOS.lista.length>EVENTOS.max)EVENTOS.lista.shift();
 }
 function registroDoMundo(){
-  return {totens:S.totems.map(t=>({id:Eventos.idTotem(t.id),nome:t.nome,zona:ZONES[t.zi].id})),criativos:CRE.map((c,k)=>({id:CRE_ID[k],nome:c.nome}))};
+  return {totens:S.totems.map(t=>({id:Eventos.idTotem(t.id),nome:t.nome,zona:ZONES[t.zi].id})),criativos:CRE.map((c,k)=>({id:CRE_ID[k],nome:c.nome})).filter((c,k)=>k!==RES||S.lanc)};
 }
 function stampOf(t){const day=Math.floor(t/86400),s=t%86400;return DIAS[day%7]+' '+String(Math.floor(s/3600)).padStart(2,'0')+':'+String(Math.floor(s/60%60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');}
 function pushLine(k,x){S.lines.push({k,t:stampOf(S.t),x});if(S.lines.length>500)S.lines.shift();}
@@ -35,6 +35,25 @@ function processarConversoes(){
   }
 }
 function agendar(mapa,passo,x){const l=mapa.get(passo);if(l)l.push(x);else mapa.set(passo,[x]);}
+/* Criativo novo no meio da operação (docs/ALGORITMO.md): o criativo RES entra em campo sem nenhuma contagem aprendida.
+   S.lanc acompanha o que importa: em quanto tempo o algoritmo o testa e, se o oráculo o escolhe, em quanto tempo o adota.
+   Janela de 60 passos (30 min): adotado = o algoritmo o exibe em pelo menos 80% dos spots em que o oráculo o exibe. */
+const JANELA_LANC=60;
+function iniciarLancamento(){
+  if(S.lanc)return;
+  S.totems.forEach(tt=>{for(let h=0;h<24;h++)for(let s=0;s<NS;s++){const k=(h*NS+s)*NC+RES;tt.P[k]=Math.min(.09,tt.P[k]*PRM.qnovo);}});
+  S.lanc={passo:S.step,t:S.t,sa:0,so:0,anel:[],wa:0,wo:0,totens:0,testadoEm:null,adotadoEm:null,oraculoUsa:false,oraculoJa:false};
+}
+function acompanharLancamento(){
+  const L=S.lanc,dec=S.step+1-L.passo;
+  L.anel.push([L.sa,L.so]);L.wa+=L.sa;L.wo+=L.so;L.sa=0;L.so=0;
+  if(L.anel.length>JANELA_LANC){const [a,o]=L.anel.shift();L.wa-=a;L.wo-=o;}
+  L.totens=S.totems.reduce((n,t)=>n+(t.shows[RES]>0?1:0),0);
+  if(L.testadoEm===null&&L.totens*2>=S.totems.length)L.testadoEm=dec;
+  L.oraculoUsa=L.anel.length>=JANELA_LANC&&L.wo>=30;
+  if(L.oraculoUsa)L.oraculoJa=true;
+  if(L.adotadoEm===null&&L.oraculoUsa&&L.wa>=.8*L.wo)L.adotadoEm=dec;
+}
 function step(){
   const t=S.t,hour=(t/3600)%24,hI=hour|0,day=Math.floor(t/86400),we=(day%7)>=5||EV.feriado;
   const atrasoOn=PRM.atraso>0,mediaP=PRM.atraso*2,janela=Math.ceil(PRM.espera*mediaP);
@@ -80,6 +99,7 @@ function step(){
       v*=f*(atrasoOn?CRE[c].cv:1);oV.push(v/tot);oF.push(f);if(v>ov){ov=v;cO=c;}
     }
     const ch=[cA,cR,cO],fa=[0,0,0],hp=[0,0,0];
+    if(S.lanc){if(cA===RES)S.lanc.sa++;if(cO===RES)S.lanc.so++;}
     for(let p=0;p<3;p++)fa[p]=fatT(tt.r,tt.E[p][ch[p]]);
     const upd={},hE=EVENTOS.ativo?new Array(NS).fill(0):null;
     let rec=null;
@@ -131,6 +151,7 @@ function step(){
     if(hE)emitirEvento(tt,cA,t,hE);
     if(hp[0]>0&&S.pulses.length<80)S.pulses.push({i,t0:performance.now()});
   }
+  if(S.lanc)acompanharLancamento();
   S.t+=30;S.step++;
   if(S.t-S.binT>=900){S.bins.push(S.bin);S.bin={v:0,e:[0,0,0]};S.binT+=900;}
 }
@@ -157,21 +178,21 @@ function resumirMundo(){
     porCriativo:S.cs.map(c=>({olhares:Array.from(c.v),interacoes:Array.from(c.e),spots:Array.from(c.s)})),
     zonas:ZONES.map((z,zi)=>({id:z.id,interacoes:[0,1,2].map(p=>S.totems.filter(t=>t.zi===zi).reduce((a,t)=>a+t.eng[p],0))})),
     desgaste:S.totems.map(t=>({zona:t.zi,real:t.r,estimado:brain.rest(t.id)})),
-    melhor,verdade,totens:S.totems.length,
+    melhor,verdade,totens:S.totems.length,lancamento:S.lanc?{passo:S.lanc.passo,testadoEm:S.lanc.testadoEm,adotadoEm:S.lanc.adotadoEm,oraculoUsa:S.lanc.oraculoUsa,oraculoJa:S.lanc.oraculoJa,totens:S.lanc.totens,fatiaAlgoritmo:S.lanc.wa/(JANELA_LANC*S.totems.length),fatiaOraculo:S.lanc.wo/(JANELA_LANC*S.totems.length)}:null,
   };
 }
 
 /* ---------- Cenários: histórico de mudanças e reprodução do zero (docs/CENARIOS.md) ---------- */
 /* a configuração que influencia a simulação: parâmetros, cenários ligados e campanhas pausadas */
 function configAtual(){
-  return {params:Object.assign({},PRM),eventos:Object.assign({},EV),campanhasPausadas:CON.map((v,k)=>v?-1:k).filter(k=>k>=0)};
+  return {params:Object.assign({},PRM),eventos:Object.assign({},EV),campanhasPausadas:CON.map((v,k)=>v?-1:k).filter(k=>k>=0&&k!==RES)};
 }
 /* o que não vier no cenário volta ao padrão: parâmetros ao DEF, cenários desligados, campanhas ativas */
 function aplicarConfig(c){
   Object.assign(PRM,DEF,c.params||{});
   Object.keys(EV).forEach(k=>{EV[k]=!!(c.eventos&&c.eventos[k]);});
-  CON.fill(true);
-  (c.campanhasPausadas||[]).forEach(k=>{if(k>=0&&k<CON.length)CON[k]=false;});
+  CON.fill(true);CON[RES]=false;
+  (c.campanhasPausadas||[]).forEach(k=>{if(k>=0&&k<RES)CON[k]=false;});
 }
 /* quem muda a configuração durante a simulação avisa aqui, para a sessão poder ser reproduzida */
 function registrarMudanca(tipo,chave,valor){
@@ -182,7 +203,7 @@ function registrarMudanca(tipo,chave,valor){
 function aplicarMudanca(m){
   if(m.tipo==='param')PRM[m.chave]=m.valor;
   else if(m.tipo==='evento')EV[m.chave]=!!m.valor;
-  else if(m.tipo==='campanha')CON[m.chave]=!!m.valor;
+  else if(m.tipo==='campanha'){CON[m.chave]=!!m.valor;if(m.chave===RES&&m.valor)iniciarLancamento();}
 }
 function cenarioAtual(nome){
   return {versao:1,nome:nome||'',semente:S.semente,passos:S.step,config0:S.config0,mudancas:S.historico.slice(),

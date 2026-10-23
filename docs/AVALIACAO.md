@@ -141,6 +141,21 @@ O que isso diz, neste mundo simulado:
 - **O viés de contar como falha existe**: um criativo que converte devagar parece pior do que é enquanto suas conversões não chegam. A janela corrige isso, mas custou mais do que ajudou aqui. Com dias mais longos ou atrasos de dias, pode ser diferente: não medi.
 - Os números têm uma medida só por forma, sem intervalo de confiança; diferenças de 1 a 2 pontos entre formas vizinhas não são conclusivas.
 
+**Criativo novo no meio da operação (issue 7).** `npm run lancar` põe o criativo novo em campo após 24 h de operação e observa por 48 h. 6 sementes, mediana entre elas; "testado" é metade dos totens, "adotado" está definido em docs/ALGORITMO.md:
+
+| Qualidade (× a taxa) | O oráculo o escolheu | Testado em | Adotado em | Fatia dos spots em 48 h (algoritmo / oráculo) |
+|---|---|---|---|---|
+| 1,0 (bom) | 6 de 6 | 7 min | 52 min (40 a 67) | 31% / 36% |
+| 0,7 | 6 de 6 | 9 min | 2,7 h (59 min a 3,0 h) | 11% / 7% |
+| 0,5 | 6 de 6, em poucas janelas | 12 min | 6,3 h (6,2 a 7,8 h) | 3,4% / 0,8% |
+| 0,3 (fraco) | 0 de 6 | 34 min | nunca (não há o que adotar) | 0,3% / 0% |
+
+O que isso diz, neste mundo simulado:
+- **Um criativo bom é testado em minutos e adotado em cerca de 1 hora**, sem nenhuma contagem prévia. Isso vem do prior fraco (a taxa média da rede vale pouco) combinado com a amostragem de Thompson, que explora o que ainda é incerto.
+- **Quanto mais marginal o criativo, mais demora a adoção**: de 1 h para um criativo bom a 6 h para um que o oráculo só escolhe em poucos momentos do dia. É o comportamento esperado, porque a diferença que o algoritmo precisa enxergar é pequena.
+- **Um criativo fraco custa pouco**: ocupa 0,3% dos spots em 48 h. O custo do teste é pequeno neste mundo.
+- Seis sementes e um criativo novo só (um criativo forte no parque, no comércio e no campus à tarde). Outro perfil de criativo, ou um lançamento com a rede já saturada de desgaste, pode se comportar diferente: não medi. A "adoção" é uma definição minha, com janela de 30 min e limiar de 80%.
+
 ## Limites
 
 - O mundo simulado é o mesmo em que o algoritmo foi desenvolvido. Os números provam que o algoritmo funciona nele, e não que funcionará em campo.

@@ -35,7 +35,7 @@ function renderPanel(){
   const hn=Math.floor((S.t/3600)%24);
   $('pHours').innerHTML=hv.map((v,h)=>`<i class="${h===hn?'now':''}" style="height:${Math.max(4,v/mx*100)}%" title="${h}h · ${v.toLocaleString('pt-BR',{maximumFractionDigits:1})}"></i>`).join('');
   const order=Array.from({length:NS},(_,s)=>s).sort((a,b)=>tt.recent[b]-tt.recent[a]).slice(0,3);
-  $('pLearn').innerHTML=order.map(s=>{let bc=0,bm=-1;for(let k=0;k<NC;k++){const m=brain.mean(tt.id,s,k);if(m>bm){bm=m;bc=k;}}
+  $('pLearn').innerHTML=order.map(s=>{let bc=0,bm=-1;for(let k=0;k<NC;k++){if(!CON[k])continue;const m=brain.mean(tt.id,s,k);if(m>bm){bm=m;bc=k;}}
     return `<div><i style="background:${CRE[bc].cor}"></i><span>${segLabel(s)} → ${CRE[bc].nome}</span><b>${pc(bm)}</b></div>`;}).join('');
   $('pA').textContent=per1k(tt.eng[0],tt.views);$('pR').textContent=per1k(tt.eng[1],tt.views);
 }
@@ -50,6 +50,12 @@ function renderKPIs(){
   $('kG').textContent=(g>=0?'+':'')+(g*100).toLocaleString('pt-BR',{maximumFractionDigits:0})+'%';
   const eff=effSeries(0),n=eff.length;
   $('kE').textContent=n?pc(eff[n-1],0):'–';
+  const L=S.lanc,kl=$('kLanc'),bl=$('btnLancar');
+  kl.hidden=!L;bl.disabled=!!L;bl.textContent=L?'Criativo novo em campo':'Lançar criativo novo';
+  if(L){
+    const dur=S.step-L.passo,m=p=>{const x=p*.5;return x>=120?f2(x/60,1)+' h':Math.round(x)+' min';},fa=x=>pc(x/(JANELA_LANC*S.totems.length),0);
+    kl.textContent=`Criativo novo “${CRE[RES].nome}” em campo há ${m(dur)}: exibido em ${L.totens} de ${S.totems.length} totens${L.testadoEm!==null?` (metade testada em ${m(L.testadoEm)})`:''} · ${L.adotadoEm!==null?`adotado pelo algoritmo em ${m(L.adotadoEm)}`:L.oraculoUsa?'ainda não adotado, e o oráculo já o escolhe':dur<JANELA_LANC?'medindo a adoção (precisa de 30 min)':'o oráculo não o escolhe agora, então não há o que adotar'} · fatia dos spots nos últimos 30 min: algoritmo ${fa(L.wa)}, oráculo ${fa(L.wo)}`;
+  }
   const cv=$('kConv'),cc=S.conv,cp=S.convPend,mostra=PRM.atraso>0||cc[0]+cp[0]>0;
   cv.hidden=!mostra;
   if(mostra){const tot=p=>cc[p]+cp[p];cv.textContent=`Conversões (atraso médio ${PRM.atraso} min): algoritmo ${fmt(cc[0])} chegaram e ${fmt(cp[0])} a caminho · rotação ${fmt(cc[1])} e ${fmt(cp[1])} · ganho ${tot(1)>0?((tot(0)/tot(1)-1)*100).toLocaleString('pt-BR',{maximumFractionDigits:0}):0}% contando as que ainda vão chegar`;}
@@ -62,13 +68,14 @@ function effSeries(p){
 function renderHeat(){
   const G=brain.cells.G,rows=[],truth=s=>c=>{const cr=CRE[c];let m=0;ZONES.forEach(z=>m+=cr.zone[z.id]??1);return cr.base*cr.age[s&3]*cr.gen[s>>2]*m/ZONES.length;};
   let mx=.001;const val=[];
-  for(let s=0;s<NS;s++){val.push([]);for(let c=0;c<NC;c++){const k=s*NC+c,v=(G.a[k]+.2)/(G.n[k]+10);val[s].push(v);if(v>mx)mx=v;}}
-  let h='<table class="heat"><thead><tr><th></th>'+CRE.map(c=>`<th><i style="background:${c.cor}"></i>${c.nome.split(' ')[0]}</th>`).join('')+'</tr></thead><tbody>';
+  const NV=S.lanc?NC:RES;     // o criativo reservado só aparece depois do lançamento
+  for(let s=0;s<NS;s++){val.push([]);for(let c=0;c<NV;c++){const k=s*NC+c,v=(G.a[k]+.2)/(G.n[k]+10);val[s].push(v);if(v>mx)mx=v;}}
+  let h='<table class="heat"><thead><tr><th></th>'+CRE.slice(0,NV).map(c=>`<th><i style="background:${c.cor}"></i>${c.nome.split(' ')[0]}</th>`).join('')+'</tr></thead><tbody>';
   for(let s=0;s<NS;s++){
-    let bi=0;for(let c=1;c<NC;c++)if(val[s][c]>val[s][bi])bi=c;
-    const tr=truth(s);let ti=0;for(let c=1;c<NC;c++)if(tr(c)>tr(ti))ti=c;
+    let bi=0;for(let c=1;c<NV;c++)if(val[s][c]>val[s][bi])bi=c;
+    const tr=truth(s);let ti=0;for(let c=1;c<NV;c++)if(tr(c)>tr(ti))ti=c;
     h+=`<tr><th>${segLabel(s)}</th>`;
-    for(let c=0;c<NC;c++){
+    for(let c=0;c<NV;c++){
       const v=val[s][c],a=Math.round(8+70*Math.pow(v/mx,1.6));
       h+=`<td class="${c===bi?'best':''}" style="background:color-mix(in srgb,var(--accent) ${a}%,transparent)">${(v*100).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})}${showTruth?`<small>${c===ti?'★ ':''}${(tr(c)*100).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})}</small>`:''}</td>`;
     }

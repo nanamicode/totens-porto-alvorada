@@ -6,9 +6,9 @@
   if(typeof module==='object'&&module.exports)module.exports=factory();
   else root.Cenario=factory();
 })(typeof self!=='undefined'?self:globalThis,function(){
-  const PARAMS=['acc','kz','kt','rest','forget','look','cpm','val','corrige','estima','contexto','kp','atraso','espera'];
+  const PARAMS=['acc','kz','kt','rest','forget','look','cpm','val','corrige','estima','contexto','kp','atraso','espera','qnovo'];
   const EVENTOS=['chuva','show','greve','feriado'];
-  const N_CRIATIVOS=7,MAX_PASSOS=43200,MAX_MUDANCAS=2000,MAX_LINK=6000;
+  const N_CRIATIVOS=7,N_CAMPANHAS=8,MAX_PASSOS=43200,MAX_MUDANCAS=2000,MAX_LINK=6000;
   const inteiro=(v,a,b)=>Number.isInteger(v)&&v>=a&&v<=b;
 
   /* devolve {ok, erros}; um cenário válido pode ser refeito com reproduzirPassos */
@@ -61,7 +61,7 @@
           if(!EVENTOS.includes(m.chave))e.push(`${rot}: cenário desconhecido ${m.chave}`);
           else if(typeof m.valor!=='boolean')e.push(`${rot}.valor deve ser verdadeiro ou falso`);
         }else if(m.tipo==='campanha'){
-          if(!inteiro(m.chave,0,N_CRIATIVOS-1))e.push(`${rot}.chave deve ser o índice de uma campanha`);
+          if(!inteiro(m.chave,0,N_CAMPANHAS-1))e.push(`${rot}.chave deve ser o índice de uma campanha`);
           else if(typeof m.valor!=='boolean')e.push(`${rot}.valor deve ser verdadeiro ou falso`);
         }else e.push(`${rot}.tipo deve ser param, evento ou campanha`);
       });

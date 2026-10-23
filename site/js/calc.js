@@ -146,6 +146,7 @@ const PARAMS=[
   {k:'estima',l:'Estimar o desgaste de cada totem',min:0,max:1,step:1,f:v=>v?'ligado':'desligado',n:'Ligado, o algoritmo ajusta r̂ de cada totem aos dados. Desligado, usa o valor fixo.'},
   {k:'atraso',l:'Atraso médio da conversão (minutos)',min:0,max:480,step:15,f:v=>v?v+' min':'desligado',n:'Ligado, cada interação converte com a chance do criativo e a conversão chega depois. O algoritmo passa a aprender com as conversões, não com o toque.'},
   {k:'espera',l:'Esperar o resultado antes de aprender (× atraso)',min:0,max:6,step:.5,f:v=>v?'janela de '+n2(v,1)+' × o atraso':'conta já como falha',n:'0: o olhar entra na hora como falha e o acerto é somado quando chega. Acima de 0: o olhar e o resultado entram juntos depois da janela. Só vale com o atraso ligado.'},
+  {k:'qnovo',l:'Qualidade do criativo novo (× a taxa)',min:.2,max:1.5,step:.1,f:v=>'× '+n2(v,1),n:'Vale só na hora do lançamento: multiplica a taxa verdadeira do criativo novo. 1 = ele é bom; abaixo disso tende a não valer a adoção.'},
   {k:'look',l:'Horizonte do oráculo (spots)',min:0,max:40,step:1,f:v=>v,n:'Só afeta a referência de 100%: quanto o oráculo antecipa o desgaste.'},
   {k:'cpm',l:'Preço por 1.000 olhares (R$)',min:5,max:60,step:1,f:v=>'R$ '+v,n:'Economia. Só afeta custo por interação e retorno no painel Anunciantes.'},
   {k:'val',l:'Valor de uma interação para o anunciante (R$)',min:1,max:30,step:1,f:v=>'R$ '+v,n:'Economia. Usado no retorno sobre o investimento.'},
