@@ -60,7 +60,7 @@ atualiza o totem, a zona e a rede ao mesmo tempo.  A cada hora: a, n ×= ${n2(PR
   el.innerHTML=h;
 }
 function renderPost(){
-  const tt=S.totems[sel],lvl=$('postLvl').value,G=B.G,Zc=B.Z[tt.zi],T=B.T[sel];
+  const tt=S.totems[sel],lvl=$('postLvl').value,G=brain.cells.G,Zc=brain.cells.Z[tt.zi],T=brain.cells.T[sel];
   let mx=.001;const cell=[];
   for(let s=0;s<NS;s++){cell.push([]);for(let c=0;c<NC;c++){
     const k=s*NC+c,gm=(G.a[k]+.2)/(G.n[k]+10),zm=(Zc.a[k]+PRM.kz*gm)/(Zc.n[k]+PRM.kz);

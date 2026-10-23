@@ -1,7 +1,6 @@
 'use strict';
 /* Simulação: passo de 30 s que une mundo, algoritmo, rotação fixa e oráculo, com rastreio dos cálculos. */
 /* ---------- Passo da simulação: 30 s ---------- */
-const dbg={run:0,exp:0};
 const DE=Math.exp(-Math.LN2*.5/150),DS=Math.exp(-Math.LN2*.5/180);
 const f2=(x,d=2)=>Number(x).toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d});
 function stampOf(t){const day=Math.floor(t/86400),s=t%86400;return DIAS[day%7]+' '+String(Math.floor(s/3600)).padStart(2,'0')+':'+String(Math.floor(s/60%60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');}
@@ -10,10 +9,11 @@ function step(){
   const t=S.t,hour=(t/3600)%24,hI=hour|0,day=Math.floor(t/86400),we=(day%7)>=5||EV.feriado;
   const hAbs=Math.floor(t/3600);
   if(hAbs!==S.hAbs){
-    if(S.hAbs!==undefined){brainForget();pushLine('esq',`Esquecimento: todas as contagens (a, n) multiplicadas por ${f2(PRM.forget,3)} em ${(S.totems.length+ZONES.length+1)*NS*NC} células`);}
+    if(S.hAbs!==undefined){brain.forget();pushLine('esq',`Esquecimento: todas as contagens (a, n) multiplicadas por ${f2(PRM.forget,3)} em ${(S.totems.length+ZONES.length+1)*NS*NC} células`);}
     S.hAbs=hAbs;
     if(hI===0)pushLine('marco',`Começa ${DIAS[day%7]} (dia ${day+1})${we?' · fim de semana':''}`);
   }
+  brain.decay(DE);
   const zpR=ZONES.map(z=>z.prof(hour,we)),zp=ZONES.map((z,k)=>(zpR[k]+.03)*evMul(z.id));
   const act=[];CON.forEach((x,c)=>{if(x)act.push(c);});
   const dh=Math.floor(t/60%60),stamp=String(hI).padStart(2,'0')+':'+String(dh).padStart(2,'0');
@@ -36,7 +36,7 @@ function step(){
     }
     if(TR){TR.N=N;TR.nt=Array.from(nt);TR.ne=Array.from(ne);TR.err=err;TR.w=Array.from(w);}
     const aud=N>0?ne:w,tot=N>0?N:1;
-    const cA=brainChoose(i,aud,tot,dbg,TR),runner=dbg.run,expA=dbg.exp;
+    const dec=brain.choose(i,aud,tot,TR),cA=dec.c,runner=dec.run,expA=dec.exp;
     const cR=act[(S.step+i*3)%act.length];
     let cO=0,ov=-1;const oV=[],oF=[];
     for(let c=0;c<NC;c++){
@@ -54,7 +54,7 @@ function step(){
         const hit=u<tt.P[base+ch[p]]*fa[p];
         if(hit){tt.eng[p]++;S.tot.e[p]++;S.bin.e[p]++;hp[p]++;}
         if(p===0){
-          brainLearn(i,vU[v],cA,hit);
+          brain.learn(i,vU[v],cA,hit);
           if(TR){
             const u2=upd[vU[v]]||(upd[vU[v]]={n:0,hit:0});u2.n++;if(hit)u2.hit++;
             if(TR.rows.length<16)TR.rows.push({ts:vT[v],us:vU[v],u,p:tt.P[base+ch[0]]*fa[0],hit});
@@ -62,6 +62,7 @@ function step(){
         }
       }
     }
+    brain.expose(i,cA,N);
     for(let p=0;p<3;p++){tt.E[p][ch[p]]+=N;const q=S.cs[p];q.v[ch[p]]+=N;q.e[ch[p]]+=hp[p];q.s[ch[p]]++;}
     tt.views+=N;S.tot.v+=N;S.bin.v+=N;
     for(let v=0;v<N;v++)tt.recent[vU[v]]++;
@@ -77,7 +78,7 @@ function step(){
     if(TR){
       TR.choice=cA;TR.runner=runner;TR.exp=expA;TR.rot=cR;TR.oV=oV;TR.oF=oF;TR.orc=cO;
       TR.out=[0,1,2].map(p=>({c:ch[p],f:fa[p],hits:hp[p]}));TR.upd=upd;TR.post={};
-      for(const s in upd){const m=[];for(let c=0;c<NC;c++)m.push(effMean(i,+s,c));TR.post[s]=m;}
+      for(const s in upd){const m=[];for(let c=0;c<NC;c++)m.push(brain.mean(i,+s,c));TR.post[s]=m;}
       S.traces.push(TR);if(S.traces.length>150)S.traces.shift();
       pushLine('dec',`${tt.nome} · λ=${f2(lam)} N=${N} (câmera errou ${err}) · escolhe ${CRE[cA].nome} (esperado ${pc(expA)}; 2ª ${CRE[runner].nome}) · rotação=${CRE[cR].nome} · oráculo=${CRE[cO].nome} · interações A/R/O = ${hp[0]}/${hp[1]}/${hp[2]}`);
     }

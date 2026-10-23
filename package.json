@@ -1,0 +1,14 @@
+{
+  "name": "totens-porto-alvorada",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Simulador de totens digitais com Thompson Sampling contextual.",
+  "scripts": {
+    "test": "node --test",
+    "demo": "node examples/brain-demo.js",
+    "bundle": "python tools/bundle.py"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
