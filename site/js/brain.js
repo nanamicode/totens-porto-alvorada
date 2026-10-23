@@ -12,7 +12,7 @@
   else root.Brain=factory(root.Util);
 })(typeof self!=='undefined'?self:globalThis,function(U){
   const {betaS}=U;
-  const DEFAULTS={kz:40,kt:60,rest:.4,forget:.985,corrige:1,estima:1};
+  const DEFAULTS={kz:40,kt:60,rest:.4,forget:.985,corrige:1,estima:1,contexto:0,kp:10};
   const GRADE=[0,.1,.2,.3,.4,.5,.6,.7,.8,1,1.2,1.5,2];   // valores de r (taxa de desgaste) considerados na estimativa
   const fat=(r,e)=>.35+.65*Math.exp(-r*e/600);      // fator multiplicativo sobre a taxa, dada a exposição e
   const MIN_BETA=1e-3;     // evita Beta(0, b), que não existe, quando os priors são zerados e ainda não há dados
@@ -20,6 +20,7 @@
   /* opt.nSeg, opt.nCre   número de perfis e de criativos
      opt.zoneOf           zona de cada totem (array de índices)
      opt.nZones           número de zonas
+     opt.nPeriods         número de períodos do dia usados como contexto (padrão 1: sem contexto de horário)
      opt.rng              função aleatória em [0,1)
      opt.params           kz, kt (força dos priors), rest (desgaste assumido, ou prior da estimativa), forget (esquecimento por hora),
                           corrige (1 = cada interação vale 1/f, medindo a taxa sem desgaste),
@@ -33,6 +34,20 @@
     const T=zoneOf.map(mk),Z=Array.from({length:opt.nZones},mk),G=mk();
     const E=zoneOf.map(()=>new Float64Array(NC));       // olhares recentes de cada criativo em cada totem
     const score=new Float64Array(NC);
+
+    /* período do dia: um multiplicador por criativo e período, comum a toda a rede, com média 1 por criativo.
+       Mh soma as interações (já corrigidas pelo desgaste) e Mx soma o que a taxa média da rede previa. */
+    const NP=opt.nPeriods||1;
+    const Mh=new Float64Array(NP*NC),Mx=new Float64Array(NP*NC),Mn=new Float64Array(NP*NC).fill(1);
+    let perFn=null;                                            // substitui a estimativa (só para experimentos)
+    const mult=(c,per)=>perFn?perFn(c,per):(P.contexto&&NP>1&&per!=null?Mn[per*NC+c]:1);
+    function refreshMult(){
+      for(let c=0;c<NC;c++){
+        let sum=0;
+        for(let q=0;q<NP;q++){const k=q*NC+c;Mn[k]=(Mh[k]+P.kp)/(Mx[k]+P.kp);sum+=Mn[k];}
+        const avg=sum/NP;for(let q=0;q<NP;q++)Mn[q*NC+c]/=avg;
+      }
+    }
 
     /* desgaste: r por totem. Com params.estima ligado, é estimado pelos dados; senão vale params.rest */
     const ll=zoneOf.map(()=>new Float64Array(GRADE.length));   // log-verossimilhança de cada r, por totem
@@ -54,7 +69,7 @@
     }
 
     /* aud: audiência por perfil (contagens) · tot: total que divide a audiência · rec: objeto opcional que recebe cada cálculo */
-    function choose(i,aud,tot,rec){
+    function choose(i,aud,tot,rec,per){
       const t=T[i],Zc=Z[zoneOf[i]],e=E[i],r=rest(i);
       score.fill(0);
       for(let s=0;s<NS;s++){
@@ -70,10 +85,10 @@
         }
       }
       let b=-1,bv=-1,s2=-1,sv=-1;
-      if(rec){rec.raw=[];rec.E=[];rec.fe=[];rec.v=[];rec.rEst=r;}
+      if(rec){rec.raw=[];rec.E=[];rec.fe=[];rec.v=[];rec.rEst=r;rec.mult=[];}
       for(let c=0;c<NC;c++){
-        const fe=fat(r,e[c]),v=active[c]?score[c]/tot*fe:0;
-        if(rec){rec.raw.push(score[c]);rec.E.push(e[c]);rec.fe.push(fe);rec.v.push(v);}
+        const fe=fat(r,e[c]),m=mult(c,per),v=active[c]?score[c]/tot*fe*m:0;
+        if(rec){rec.mult.push(m);rec.raw.push(score[c]);rec.E.push(e[c]);rec.fe.push(fe);rec.v.push(v);}
         if(!active[c])continue;
         if(v>bv){s2=b;sv=bv;b=c;bv=v;}else if(v>sv){s2=c;sv=v;}
       }
@@ -82,16 +97,17 @@
     }
 
     /* seg: perfil visto pela câmera · c: criativo exibido · hit: a pessoa interagiu */
-    function learn(i,seg,c,hit){
-      const k=seg*NC+c,t=T[i],Zc=Z[zoneOf[i]],e=E[i][c];
-      /* com corrige, cada interação vale 1/f: as contagens passam a medir a taxa sem desgaste */
-      const inc=hit?(P.corrige?1/fat(rest(i),e):1):0;
+    function learn(i,seg,c,hit,per){
+      const k=seg*NC+c,t=T[i],Zc=Z[zoneOf[i]],e=E[i][c],f=fat(rest(i),e),m=mult(c,per);
+      /* com corrige, cada interação vale 1/f; com contexto, também 1/m: as contagens medem a taxa sem desgaste e sem efeito do horário */
+      const inc=hit?1/((P.corrige?f:1)*m):0;
       t.n[k]++;Zc.n[k]++;G.n[k]++;
       t.a[k]+=inc;Zc.a[k]+=inc;G.a[k]+=inc;
+      if(P.contexto&&NP>1&&per!=null&&!perFn){const q=per*NC+c;Mh[q]+=hit?(P.corrige?1/f:1):0;Mx[q]+=globalMean(seg,c);}
       if(P.estima){
         if(i!==mi||c!==mc||e!==me){mi=i;mc=c;me=e;for(let g=0;g<GRADE.length;g++)mf[g]=fat(GRADE[g],e);}
         const b=(G.a[k]+.2)/(G.n[k]+10),L=ll[i];
-        for(let g=0;g<GRADE.length;g++){const p=Math.min(Math.max(b*mf[g],1e-4),.5);L[g]+=Math.log(hit?p:1-p);}
+        for(let g=0;g<GRADE.length;g++){const p=Math.min(Math.max(b*m*mf[g],1e-4),.5);L[g]+=Math.log(hit?p:1-p);}
       }
       return inc;
     }
@@ -102,6 +118,7 @@
       const dec=m=>{for(let k=0;k<m.a.length;k++){m.a[k]*=f;m.n[k]*=f;}};
       T.forEach(dec);Z.forEach(dec);dec(G);
       for(const L of ll)for(let g=0;g<L.length;g++)L[g]*=f;
+      for(let q=0;q<Mh.length;q++){Mh[q]*=f;Mx[q]*=f;}
     }
 
     /* exposição: o totem sabe o que exibiu e para quantas pessoas */
@@ -109,6 +126,7 @@
     function decay(f){
       for(let i=0;i<E.length;i++){const e=E[i];for(let c=0;c<NC;c++)e[c]*=f;}
       if(P.estima)refreshRest();
+      if(P.contexto&&NP>1)refreshMult();
     }
     /* r de cada totem = média da distribuição a posteriori sobre a grade, com prior centrado em params.rest */
     function refreshRest(){
@@ -123,7 +141,7 @@
     }
 
     return {choose,learn,forget,mean,globalMean,zoneMean,expose,decay,
-      wear:(i,c)=>wearOf(i,E[i][c]),rest,setRest:fn=>{restFn=fn;},exposure:i=>E[i],active,cells:{T,Z,G},params:P};
+      wear:(i,c)=>wearOf(i,E[i][c]),rest,setRest:fn=>{restFn=fn;},setPeriodFactor:fn=>{perFn=fn;},periodFactor:mult,periods:NP,exposure:i=>E[i],active,cells:{T,Z,G},params:P};
   }
   return {create,DEFAULTS};
 });

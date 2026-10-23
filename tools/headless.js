@@ -24,9 +24,15 @@ sel = -1;                                  // sem rastreio de cálculos: mais r�
 Object.assign(PRM, opts.params || {});
 (opts.eventos || []).forEach(k => { EV[k] = true; });
 (opts.pausadas || []).forEach(c => { CON[c] = false; });
+if (opts.escalaHorario) CRE.forEach(cr => { const f = cr.tm; cr.tm = h => 1 + opts.escalaHorario * (f(h) - 1); });
 init(opts.seed);
 if (opts.escalaDesgaste) S.totems.forEach(t => { t.r *= opts.escalaDesgaste; });
 if (opts.desgasteVerdadeiro) brain.setRest(i => S.totems[i].r);
+if (opts.periodoVerdadeiro) brain.setPeriodFactor((c, per) => {   // teto: o algoritmo conhece o efeito do horário
+  let a = 0, d = 0;
+  for (let h = 0; h < 24; h++) { const v = CRE[c].tm(h); d += v; if (((h / 3) | 0) === per) a += v; }
+  return (a / 3) / (d / 24);
+});
 for (let k = 0; k < opts.steps; k++) step();
 const G = brain.cells.G, melhor = [], verdade = [];
 for (let s = 0; s < NS; s++) {

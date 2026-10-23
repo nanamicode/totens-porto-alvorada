@@ -117,3 +117,30 @@ test('estima um desgaste maior para o totem que cansa mais depressa', () => {
   }
   assert.ok(brain.rest(1) - brain.rest(0) > 0.2, `estimou ${brain.rest(0).toFixed(2)} e ${brain.rest(1).toFixed(2)}`);
 });
+
+test('com contexto de horário, escolhe um criativo em cada período do dia', () => {
+  const TX = [[0.06, 0.03, 0.005], [0.03, 0.06, 0.005]];      // [período][criativo]: o 0 vence no período 0, o 1 no período 1
+  const brain = Brain.create({ nSeg: 1, nCre: 3, nZones: 1, zoneOf: [0], nPeriods: 2, rng: mulberry32(31),
+    params: { kz: 4, kt: 4, rest: 0.4, forget: 0.985, corrige: 1, estima: 0, contexto: 1, kp: 10 } });
+  const rng = mulberry32(32), aud = new Float64Array(1);
+  aud[0] = 5;
+  const ultimas = [[], []];
+  for (let spot = 0; spot < 4000; spot++) {
+    brain.decay(0.9977);
+    const per = spot % 2;
+    const { c } = brain.choose(0, aud, 5, null, per);
+    for (let k = 0; k < 5; k++) brain.learn(0, 0, c, rng() < TX[per][c], per);
+    brain.expose(0, c, 5);
+    if (spot >= 3600) ultimas[per].push(c);
+  }
+  assert.ok(ultimas[0].filter(c => c === 0).length / ultimas[0].length > 0.7, 'período 0 deveria receber o criativo 0');
+  assert.ok(ultimas[1].filter(c => c === 1).length / ultimas[1].length > 0.7, 'período 1 deveria receber o criativo 1');
+  assert.ok(brain.periodFactor(0, 0) > 1.1 && brain.periodFactor(0, 1) < 0.9);
+  assert.ok(Math.abs((brain.periodFactor(1, 0) + brain.periodFactor(1, 1)) / 2 - 1) < 1e-9, 'os multiplicadores de cada criativo têm média 1');
+});
+
+test('sem contexto de horário, os multiplicadores valem 1', () => {
+  const brain = Brain.create({ nSeg: 1, nCre: 3, nZones: 1, zoneOf: [0], nPeriods: 4, rng: mulberry32(1),
+    params: { kz: 40, kt: 60, rest: 0.4, forget: 0.985, corrige: 1, estima: 0, contexto: 0, kp: 10 } });
+  for (let q = 0; q < 4; q++) assert.equal(brain.periodFactor(0, q), 1);
+});
