@@ -87,3 +87,24 @@ test('com a câmera errando 40% das faixas etárias, ainda há ganho', () => {
   const r = resumo(simular({ seed: 4, steps: 1440, params: { acc: 0.6 } }));
   assert.ok(r.ganho > 0.10, `${(r.ganho * 100).toFixed(1)}%`);
 });
+
+test('corrigir e estimar o desgaste supera o comportamento anterior, semente por semente', () => {
+  const diffs = [11, 12, 13, 14].map(seed => {
+    const antes = simular({ seed, steps: DIA, params: { corrige: 0, estima: 0 } });
+    const depois = simular({ seed, steps: DIA });
+    return (depois.interacoes[0] - antes.interacoes[0]) / antes.interacoes[1];
+  });
+  const est = estatistica(diffs);
+  assert.ok(est.min > 0.002, `pior semente: ${(est.min * 100).toFixed(2)} pontos`);
+  assert.ok(est.media > 0.008, `diferença média: ${(est.media * 100).toFixed(2)} pontos`);
+});
+
+test('o desgaste estimado de cada totem acompanha o desgaste real', () => {
+  const real = [], estimado = [];
+  for (const s of SEMENTES) dia(s).desgaste.forEach(d => { real.push(d.real); estimado.push(d.estimado); });
+  const n = real.length, mr = media(real), me = media(estimado);
+  let sxy = 0, sxx = 0, syy = 0;
+  for (let i = 0; i < n; i++) { sxy += (real[i] - mr) * (estimado[i] - me); sxx += (real[i] - mr) ** 2; syy += (estimado[i] - me) ** 2; }
+  const correlacao = sxy / Math.sqrt(sxx * syy);
+  assert.ok(correlacao > 0.6, `correlação ${correlacao.toFixed(2)}`);
+});

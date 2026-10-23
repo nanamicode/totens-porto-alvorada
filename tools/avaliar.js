@@ -5,7 +5,7 @@
 
    --sementes=N   número de sementes (padrão 10)
    --passos=N     spots de 30 s por semente (padrão 2880 = 1 dia, a partir das 06:00 de segunda)
-   --acc --kz --kt --rest --forget --look   parâmetros do algoritmo e da câmera
+   --acc --kz --kt --rest --forget --look --corrige --estima   parâmetros do algoritmo e da câmera
    --evento=a,b   cenários ligados: chuva, show, greve, feriado
    --pausar=0,3   índices das campanhas pausadas desde o início */
 const { simular, resumo, estatistica } = require('./headless.js');
@@ -17,7 +17,7 @@ const args = Object.fromEntries(process.argv.slice(2).map(a => {
 const sementes = Number(args.sementes ?? 10);
 const passos = Number(args.passos ?? 2880);
 const params = {};
-for (const k of ['acc', 'kz', 'kt', 'rest', 'forget', 'look']) if (args[k] !== undefined) params[k] = Number(args[k]);
+for (const k of ['acc', 'kz', 'kt', 'rest', 'forget', 'look', 'corrige', 'estima']) if (args[k] !== undefined) params[k] = Number(args[k]);
 const eventos = args.evento ? args.evento.split(',') : [];
 const pausadas = args.pausar ? args.pausar.split(',').map(Number) : [];
 

@@ -42,7 +42,7 @@ b = (n_totem − a_totem) + K_totem·(1 − μ_zona)                 K_totem = $
     h+=`<details class="sd"${k<2?' open':''}><summary>${segLabel(s)} · n_s = ${N>0?tr.ne[s]:n2(tr.w[s],3)}${N===0?' (esperado)':''}</summary>${table(['Criativo','μ rede','n rede','μ zona','n zona','a','b','média','θ sorteado','n_s·θ'],rows)}</details>`;
   });
   h+='</section>';
-  h+=`<section class="calc"><h3><b>4</b>Pontuação e escolha (Thompson Sampling)</h3><pre>score_c = ( Σ_s n_s·θ_s,c / N ) × f̂_c            f̂_c = 0,35 + 0,65·exp(−r̂·E_c / 600)      r̂ = ${n2(PRM.rest)}
+  h+=`<section class="calc"><h3><b>4</b>Pontuação e escolha (Thompson Sampling)</h3><pre>score_c = ( Σ_s n_s·θ_s,c / N ) × f̂_c            f̂_c = 0,35 + 0,65·exp(−r̂·E_c / 600)      r̂ do totem = ${n2(tr.rEst)}
 escolhido = argmax score_c = ${CRE[tr.choice].nome}   (esperado ${pc(tr.exp,2)})</pre>
     ${table(['Criativo','Σ n_s·θ','÷ N','Exposição E','Desgaste f̂','Score'],tr.raw.map((r,c)=>`<tr class="${c===tr.choice?'pick':c===tr.runner?'alt':''}"><td>${dotName(c)}${c===tr.choice?' ✔':c===tr.runner?' (2ª)':''}</td><td>${n2(r,3)}</td><td>${pc(r/tot,2)}</td><td>${fmt(tr.E[c])}</td><td>${n2(tr.fe[c],3)}</td><td>${pc(tr.v[c],2)}</td></tr>`))}</section>`;
   h+=`<section class="calc"><h3><b>5</b>Referências: rotação fixa e oráculo</h3><pre>rotação: criativo = (spot + 3·índice_totem) mod nº de campanhas ativas  →  ${CRE[tr.rot].nome}
@@ -54,9 +54,9 @@ interação  ⇔  u < p        (o mesmo sorteio u vale para os três, então a c
     ${table(['Política','Criativo','Desgaste real','Interações'],tr.out.map((o,p)=>`<tr><td>${pn[p]}</td><td>${dotName(o.c)}</td><td>${n2(o.f,3)}</td><td>${o.hits}</td></tr>`))}
     ${tr.rows.length?table(['Pessoa','Perfil real','Câmera viu','u','p (algoritmo)','Resultado'],tr.rows.map((r,k)=>`<tr><td>#${k+1}</td><td>${segLabel(r.ts)}</td><td>${segLabel(r.us)}${r.us!==r.ts?' ✗':''}</td><td>${n2(r.u,3)}</td><td>${pc(r.p,2)}</td><td class="${r.hit?'hit':'miss'}">${r.hit?'interagiu':'ignorou'}</td></tr>`)):''}</section>`;
   const ks=Object.keys(tr.upd);
-  h+=`<section class="calc"><h3><b>7</b>Aprendizado depois do spot</h3><pre>para cada pessoa: n[perfil visto pela câmera, criativo] += 1 ;  a[...] += 1 se interagiu
+  h+=`<section class="calc"><h3><b>7</b>Aprendizado depois do spot</h3><pre>para cada pessoa: n[perfil visto pela câmera, criativo] += 1 ;  a[...] += ${PRM.corrige?'1/f̂ (a taxa sem desgaste)':'1'} se interagiu
 atualiza o totem, a zona e a rede ao mesmo tempo.  A cada hora: a, n ×= ${n2(PRM.forget,3)}</pre>
-    ${ks.length?table(['Perfil visto','Criativo exibido','Olhares +n','Interações +a','Nova média do totem'],ks.map(s=>`<tr><td>${segLabel(+s)}</td><td>${dotName(tr.choice)}</td><td>+${tr.upd[s].n}</td><td>+${tr.upd[s].hit}</td><td>${pc(tr.post[s][tr.choice],2)}</td></tr>`)):'<p class="hint">Sem olhares, sem aprendizado neste spot.</p>'}</section>`;
+    ${ks.length?table(['Perfil visto','Criativo exibido','Olhares +n','Interações +a','Nova média do totem'],ks.map(s=>`<tr><td>${segLabel(+s)}</td><td>${dotName(tr.choice)}</td><td>+${tr.upd[s].n}</td><td>+${tr.upd[s].hit}${PRM.corrige&&tr.upd[s].hit?` (vale ${n2(tr.upd[s].a)})`:''}</td><td>${pc(tr.post[s][tr.choice],2)}</td></tr>`)):'<p class="hint">Sem olhares, sem aprendizado neste spot.</p>'}</section>`;
   el.innerHTML=h;
 }
 function renderPost(){
@@ -99,9 +99,10 @@ prior rede:  μ_rede = (a_rede + 0,2) / (n_rede + 10)
 prior zona:  μ_zona = (a_zona + ${PRM.kz}·μ_rede) / (n_zona + ${PRM.kz})
 posterior:   a = a_totem + ${PRM.kt}·μ_zona ;   b = (n_totem − a_totem) + ${PRM.kt}·(1 − μ_zona)
 amostra:     θ_s,c ~ Beta(a, b)
-audiência:   score_c = ( Σ_s n_s·θ_s,c / N ) × f̂_c ,     f̂_c = 0,35 + 0,65·exp(−${n2(PRM.rest)}·E_c / 600)
+audiência:   score_c = ( Σ_s n_s·θ_s,c / N ) × f̂_c ,     f̂_c = 0,35 + 0,65·exp(−r̂_totem·E_c / 600)
 decisão:     c* = argmax_c score_c
-aprendizado: n[s,c*] += 1 ; a[s,c*] += 1 se interagiu  (totem, zona e rede)
+aprendizado: n[s,c*] += 1 ; a[s,c*] += ${PRM.corrige?'1/f̂':'1'} se interagiu  (totem, zona e rede)
+desgaste:    ${PRM.estima?'r̂_totem = média a posteriori de r numa grade de 0 a 2, com prior centrado em '+n2(PRM.rest)+' e verossimilhança Π Bernoulli( interagiu | μ_rede(s,c)·f(E; r) )':'r̂ = '+n2(PRM.rest)+' para todos os totens'}
 memória:     a, n ×= ${n2(PRM.forget,3)} a cada hora</div></div>
   <div class="fgroup"><h3>Referências e métrica</h3><div class="formula">rotação fixa: c = campanha ativa número (spot + 3·totem) mod nº de ativas
 oráculo:      argmax_c Σ_s n_s,real·p_s,c × f(E_c + λ·${PRM.look}) , com a audiência e a taxa verdadeiras
@@ -113,7 +114,9 @@ const PARAMS=[
   {k:'kz',l:'Força do prior da zona (K_zona)',min:0,max:200,step:5,f:v=>v,n:'Quanto o conhecimento da rede pesa sobre o da zona. 0 = zona aprende sozinha.'},
   {k:'kt',l:'Força do prior do totem (K_totem)',min:0,max:200,step:5,f:v=>v,n:'Quanto o conhecimento da zona pesa sobre um totem novo. 0 = cada totem aprende sozinho.'},
   {k:'forget',l:'Fator de esquecimento por hora',min:.95,max:1,step:.001,f:v=>n2(v,3),n:'1,000 = nunca esquece. Valores menores acompanham mudanças, mas guardam menos dados.'},
-  {k:'rest',l:'Desgaste assumido pelo algoritmo (r̂)',min:0,max:1,step:.05,f:v=>n2(v),n:'0 = ignora o desgaste e repete o criativo líder.'},
+  {k:'rest',l:'Desgaste assumido pelo algoritmo (r̂)',min:0,max:1,step:.05,f:v=>n2(v),n:'Valor fixo, ou prior da estimativa quando ela está ligada. 0 = ignora o desgaste.'},
+  {k:'corrige',l:'Corrigir o aprendizado pelo desgaste',min:0,max:1,step:1,f:v=>v?'ligado':'desligado',n:'Ligado, cada interação vale 1/f nas contagens, que passam a medir a taxa sem desgaste.'},
+  {k:'estima',l:'Estimar o desgaste de cada totem',min:0,max:1,step:1,f:v=>v?'ligado':'desligado',n:'Ligado, o algoritmo ajusta r̂ de cada totem aos dados. Desligado, usa o valor fixo.'},
   {k:'look',l:'Horizonte do oráculo (spots)',min:0,max:40,step:1,f:v=>v,n:'Só afeta a referência de 100%: quanto o oráculo antecipa o desgaste.'},
   {k:'cpm',l:'Preço por 1.000 olhares (R$)',min:5,max:60,step:1,f:v=>'R$ '+v,n:'Economia. Só afeta custo por interação e retorno no painel Anunciantes.'},
   {k:'val',l:'Valor de uma interação para o anunciante (R$)',min:1,max:30,step:1,f:v=>'R$ '+v,n:'Economia. Usado no retorno sobre o investimento.'},

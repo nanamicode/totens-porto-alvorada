@@ -25,6 +25,8 @@ Object.assign(PRM, opts.params || {});
 (opts.eventos || []).forEach(k => { EV[k] = true; });
 (opts.pausadas || []).forEach(c => { CON[c] = false; });
 init(opts.seed);
+if (opts.escalaDesgaste) S.totems.forEach(t => { t.r *= opts.escalaDesgaste; });
+if (opts.desgasteVerdadeiro) brain.setRest(i => S.totems[i].r);
 for (let k = 0; k < opts.steps; k++) step();
 const G = brain.cells.G, melhor = [], verdade = [];
 for (let s = 0; s < NS; s++) {
@@ -43,6 +45,8 @@ return {
   olhares: S.tot.v, interacoes: S.tot.e,
   bins: S.bins.map(b => b.e), binsOlhares: S.bins.map(b => b.v),
   porCriativo: S.cs.map(c => ({ olhares: Array.from(c.v), interacoes: Array.from(c.e), spots: Array.from(c.s) })),
+  zonas: ZONES.map((z, zi) => ({ id: z.id, interacoes: [0, 1, 2].map(p => S.totems.filter(t => t.zi === zi).reduce((a, t) => a + t.eng[p], 0)) })),
+  desgaste: S.totems.map(t => ({ zona: t.zi, real: t.r, estimado: brain.rest(t.id) })),
   melhor, verdade, totens: S.totems.length,
 };`;
 

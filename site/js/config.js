@@ -41,7 +41,7 @@ const ZONES=[
 const ZI={};ZONES.forEach((z,i)=>ZI[z.id]=i);
 const HAGE=h=>h>=22||h<6?[1.6,1.5,.7,.25]:h<10?[.9,1,1.2,.9]:h<17?[.9,.9,1,1.4]:[1.1,1.1,1,.7];
 const XS=[60,200,350,500,650,790,910],YS=[50,180,310,440,570];
-const DEF={acc:.86,kz:40,kt:60,rest:.4,forget:.985,look:16,cpm:18,val:8};
+const DEF={acc:.86,kz:40,kt:60,rest:.4,forget:.985,look:16,cpm:18,val:8,corrige:1,estima:1};
 const PRM=Object.assign({},DEF);   // acc: câmera · kz,kt: força dos priors · rest: desgaste assumido · forget: esquecimento/h · look: horizonte do oráculo · cpm,val: economia
 const CON=new Array(NC).fill(true);   // campanhas ativas
 const EV={chuva:false,show:false,greve:false,feriado:false};
