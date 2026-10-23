@@ -149,7 +149,7 @@ const PARAMS=[
 ];
 function buildParams(){
   $('paramList').innerHTML=PARAMS.map(p=>`<div class="prm"><label for="pr_${p.k}">${p.l}</label><output id="po_${p.k}">${p.f(PRM[p.k])}</output><input type="range" id="pr_${p.k}" min="${p.min}" max="${p.max}" step="${p.step}" value="${PRM[p.k]}"><small>${p.n}</small></div>`).join('');
-  PARAMS.forEach(p=>$('pr_'+p.k).addEventListener('input',e=>{PRM[p.k]=+e.target.value;$('po_'+p.k).textContent=p.f(PRM[p.k]);renderFormulas();}));
+  PARAMS.forEach(p=>$('pr_'+p.k).addEventListener('input',e=>{PRM[p.k]=+e.target.value;registrarMudanca('param',p.k,PRM[p.k]);$('po_'+p.k).textContent=p.f(PRM[p.k]);renderFormulas();}));
 }
 function renderDrawer(force){
   EVENTOS.ativo=!drawer.hidden&&tab==='eventos';      // só gera eventos enquanto alguém os está vendo
@@ -184,5 +184,5 @@ $('evCopy').addEventListener('click',()=>{
 ['fDec','fTroca','fEsq','fMarco'].forEach(id=>$(id).addEventListener('change',renderLogTab));
 $('logCopy').addEventListener('click',()=>{const t=[...$('logBox').children].map(d=>d.textContent).join('\n');copyText(t,null);
   const rg=document.createRange();rg.selectNodeContents($('logBox'));const s=getSelection();s.removeAllRanges();s.addRange(rg);});
-$('paramReset').addEventListener('click',()=>{Object.assign(PRM,DEF);buildParams();renderFormulas();});
+$('paramReset').addEventListener('click',()=>{for(const k of Object.keys(DEF))if(PRM[k]!==DEF[k]){PRM[k]=DEF[k];registrarMudanca('param',k,DEF[k]);}buildParams();renderFormulas();});
 buildParams();renderFormulas();

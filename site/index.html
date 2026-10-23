@@ -118,6 +118,36 @@
     </div>
   </section>
 
+  <section class="card cenarios" id="cenarios" aria-label="Salvar e carregar cenários">
+    <h2>Cenários</h2>
+    <p class="hint">Guarda a cidade como está: a semente, a configuração e tudo o que você mudou ao longo da sessão (cenários, campanhas, parâmetros). Carregar refaz a simulação do zero e chega ao mesmo ponto, com a mesma semente.</p>
+    <div class="cen-grid">
+      <div class="cen-col">
+        <h3>Salvar</h3>
+        <label>Nome <input id="cenNome" type="text" maxlength="80" placeholder="Ex.: chuva e greve"></label>
+        <div class="cen-btns">
+          <button class="btn primary" id="cenSalvar" type="button">Salvar cenário atual</button>
+          <button class="btn" id="cenCopiarJson" type="button" hidden>Copiar JSON</button>
+          <button class="btn" id="cenCopiarLink" type="button" hidden>Copiar link</button>
+        </div>
+        <p class="hint" id="cenInfo"></p>
+        <textarea id="cenSaida" readonly hidden rows="7" aria-label="Cenário salvo em JSON"></textarea>
+      </div>
+      <div class="cen-col">
+        <h3>Carregar</h3>
+        <label>Exemplos <select id="cenEx"></select></label>
+        <label>JSON ou link do cenário <textarea id="cenEntrada" rows="7" placeholder="Cole aqui o JSON ou o link de um cenário"></textarea></label>
+        <div class="cen-btns">
+          <button class="btn primary" id="cenReproduzir" type="button">Reproduzir até o ponto salvo</button>
+          <button class="btn" id="cenConfig" type="button">Só a configuração, recomeçando</button>
+          <button class="btn" id="cenCancelar" type="button" hidden>Cancelar</button>
+        </div>
+        <progress id="cenProg" max="1" value="0" hidden></progress>
+        <p class="hint" id="cenMsg" aria-live="polite"></p>
+      </div>
+    </div>
+  </section>
+
   <section class="card sementes" aria-label="Variação entre sementes">
     <h2>Variação entre sementes</h2>
     <p class="hint">Roda várias cidades novas (sementes 1 a N) com os parâmetros, cenários e campanhas de agora e mostra quanto o ganho varia de uma para outra. A simulação ao vivo fica parada durante a execução e volta como estava.</p>
@@ -250,6 +280,7 @@
   </div>
 </aside>
 <script src="js/util.js"></script>
+<script src="js/cenario.js"></script>
 <script src="js/comparacao.js"></script>
 <script src="js/eventos.js"></script>
 <script src="js/config.js"></script>
@@ -263,6 +294,7 @@
 <script src="js/network.js"></script>
 <script src="js/sementes.js"></script>
 <script src="js/comparar.js"></script>
+<script src="js/cenarios.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

@@ -54,11 +54,11 @@ function csvText(){
 $('legend').addEventListener('click',e=>{
   const b=e.target.closest('.chip');if(!b)return;const c=+b.dataset.c;
   if(CON[c]&&CON.filter(Boolean).length<=1)return;
-  CON[c]=!CON[c];legKey='';pushLine('marco',`Campanha ${CRE[c].nome} ${CON[c]?'retomada':'pausada'}`);renderLegend();
+  CON[c]=!CON[c];registrarMudanca('campanha',c,CON[c]);legKey='';pushLine('marco',`Campanha ${CRE[c].nome} ${CON[c]?'retomada':'pausada'}`);renderLegend();
 });
 document.addEventListener('click',e=>{const b=e.target.closest('.rk');if(b)select(+b.dataset.t);});
 $('segEv').addEventListener('click',e=>{
-  const b=e.target.closest('button');if(!b)return;const k=b.dataset.v;EV[k]=!EV[k];
+  const b=e.target.closest('button');if(!b)return;const k=b.dataset.v;EV[k]=!EV[k];registrarMudanca('evento',k,EV[k]);
   b.setAttribute('aria-pressed',String(EV[k]));pushLine('marco',`Cenário “${EVN[k]}” ${EV[k]?'ativado':'desativado'}`);
 });
 $('csvCopy').addEventListener('click',()=>copyText(csvText(),$('csvArea')));
