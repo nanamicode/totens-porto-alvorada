@@ -13,6 +13,7 @@
 - [ ] Metas de entrega por anunciante (impressões contratadas e orçamento).
 
 ## Simulador
+- [x] Redesenho visual completo, com opção 3D. Direção "Noite urbana", tema claro "Dia", vista 3D com Three.js.
 - [ ] Comparar duas configurações lado a lado.
 - [ ] Salvar e carregar cenários.
 - [x] Rodar várias sementes e mostrar a variação do ganho.

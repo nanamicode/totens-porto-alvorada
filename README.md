@@ -6,7 +6,7 @@ O objetivo é validar, com dados simulados, um algoritmo que depois possa rodar 
 
 ## Como rodar
 
-Não precisa instalar nada. Abra `site/index.html` no navegador.
+Não precisa instalar nada. Abra `site/index.html` no navegador. O visual (fontes Syne, DM Sans e JetBrains Mono) e a vista 3D (Three.js) vêm da internet; sem conexão, o site usa as fontes do sistema e a vista 3D fica indisponível.
 
 Para servir localmente:
 
@@ -18,6 +18,7 @@ Depois acesse http://localhost:8000.
 
 ## O que o simulador mostra
 
+- **Vista 3D:** a mesma cidade em volume, com prédios de janelas acesas e totens como pilares de luz. Arraste para girar, role para aproximar, clique num totem para abri-lo. Carrega o Three.js da internet na primeira vez, então precisa de conexão; sem ela, o resto do site funciona normalmente.
 - **A cidade:** 42 totens em 7 zonas (campus, centro, comércio, bairro, estação, orla e noite), com pessoas andando. O fluxo e o perfil (gênero e faixa etária) mudam com o horário e com o dia da semana.
 - **O algoritmo:** Thompson Sampling contextual e hierárquico, comparado com uma rotação fixa e com um oráculo que conhece a verdade.
 - **Menu Cálculos:** cada número do aprendizado de máquina, passo a passo, para o totem selecionado.
@@ -53,6 +54,7 @@ site/js/brain.js                algoritmo: Thompson Sampling hierárquico (indep
 site/js/sim.js                  passo de 30 s: mundo, algoritmo, rotação e oráculo
 site/js/map.js                  mapa em canvas
 site/js/ui.js                   painel do totem, indicadores e gráfico
+site/js/map3d.js                vista 3D com Three.js (carregado só quando se pede o 3D)
 site/js/calc.js                 menu de cálculos
 site/js/network.js              painel da rede, cenários e campanhas
 site/js/sementes.js             várias sementes: ganho médio e variação

@@ -5,13 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Totens de Porto Alvorada</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Schibsted+Grotesk:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;500&family=Syne:wght@700;800&display=swap">
 <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
 <div class="wrap">
   <header class="top">
     <div>
+      <span class="eyebrow">Rede de totens · 42 pontos · 7 zonas</span>
       <h1>Totens de Porto Alvorada</h1>
       <p>Uma cidade fictícia com 42 totens digitais. Cada totem conta quem passa, escolhe o criativo e aprende com as interações. Todos os dados são sintéticos.</p>
     </div>
@@ -28,13 +29,11 @@
         <button type="button" data-v="120" aria-pressed="false">120 min/s</button>
       </div>
     </div>
-    <div class="group"><span>Mapa</span>
-      <div class="seg" id="segMode" role="group" aria-label="Modo do mapa">
-        <button type="button" data-v="cri" aria-pressed="true">Criativo</button>
-        <button type="button" data-v="flx" aria-pressed="false">Fluxo</button>
-        <button type="button" data-v="gan" aria-pressed="false">Ganho</button>
-      </div>
-    </div>
+    <button class="btn" id="btnStep" type="button">+1 spot</button>
+    <button class="btn" id="btnDay" type="button">Avançar 1 dia</button>
+    <button class="btn" id="btnReset" type="button">Reiniciar</button>
+    <span id="ffMsg" class="hint" style="color:var(--muted);font-size:12.5px"></span>
+    <span class="spacer"></span>
     <div class="group"><span>Cenário</span>
       <div class="seg" id="segEv" role="group" aria-label="Eventos na cidade">
         <button type="button" data-v="chuva" aria-pressed="false" title="Chuva forte: esvazia o parque e leva gente ao shopping">Chuva</button>
@@ -43,11 +42,7 @@
         <button type="button" data-v="feriado" aria-pressed="false" title="Feriado: a cidade se comporta como num fim de semana">Feriado</button>
       </div>
     </div>
-    <button class="btn" id="btnDay" type="button">Avançar 1 dia</button>
-    <button class="btn" id="btnReset" type="button">Reiniciar</button>
-    <button class="btn" id="btnStep" type="button">+1 spot</button>
     <button class="btn primary" id="btnCalc" type="button" aria-expanded="false" aria-controls="drawer">Cálculos</button>
-    <span id="ffMsg" class="hint" style="color:var(--muted);font-size:12.5px"></span>
   </section>
 
   <section class="kpis" aria-label="Resultados acumulados">
@@ -60,8 +55,27 @@
 
   <main class="stage">
     <div class="mapwrap">
-      <canvas id="map" role="img" aria-label="Mapa de Porto Alvorada com 42 totens. Selecione um totem para ver os detalhes."></canvas>
-      <div id="tip"></div>
+      <div class="maphead">
+        <h2>Cidade agora</h2>
+        <div class="tools">
+          <div class="seg" id="segView" role="group" aria-label="Vista do mapa">
+            <button type="button" data-v="2d" aria-pressed="true">2D</button>
+            <button type="button" data-v="3d" aria-pressed="false">3D</button>
+          </div>
+          <div class="seg" id="segMode" role="group" aria-label="Modo do mapa">
+            <button type="button" data-v="cri" aria-pressed="true">Criativo</button>
+            <button type="button" data-v="flx" aria-pressed="false">Fluxo</button>
+            <button type="button" data-v="gan" aria-pressed="false">Ganho</button>
+          </div>
+        </div>
+      </div>
+      <div class="canvases" id="canvases">
+        <canvas id="map" role="img" aria-label="Mapa de Porto Alvorada com 42 totens. Selecione um totem para ver os detalhes."></canvas>
+        <canvas id="map3d" role="img" aria-label="Vista 3D de Porto Alvorada com 42 totens. Arraste para girar e clique num totem para ver os detalhes." hidden></canvas>
+        <div class="msg3d" id="msg3d" hidden></div>
+        <span class="hint3d" id="hint3d" hidden>Arraste para girar · role para aproximar</span>
+        <div id="tip"></div>
+      </div>
       <div class="legend" id="legend"></div>
     </div>
 
@@ -221,6 +235,7 @@
 <script src="js/sim.js"></script>
 <script src="js/map.js"></script>
 <script src="js/ui.js"></script>
+<script src="js/map3d.js"></script>
 <script src="js/calc.js"></script>
 <script src="js/network.js"></script>
 <script src="js/sementes.js"></script>

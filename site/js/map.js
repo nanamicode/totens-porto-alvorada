@@ -9,7 +9,7 @@ const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
 let roadSeed;
 function buildStatic(){
   const rect=cvs.parentElement.getBoundingClientRect();
-  const cw=Math.max(280,Math.floor(rect.width-2));
+  const cw=Math.max(280,Math.floor(rect.width));
   dpr=Math.min(2,window.devicePixelRatio||1);scale=cw/W;
   cvs.width=Math.round(cw*dpr);cvs.height=Math.round(H*scale*dpr);cvs.style.height=(H*scale)+'px';
   stat.width=cvs.width;stat.height=cvs.height;
@@ -78,15 +78,20 @@ function drawMap(now,dt){
     ctx.strokeStyle=CRE[tt.cur[0]].cor;ctx.globalAlpha=1-k;ctx.lineWidth=px(2);
     ctx.beginPath();ctx.arc(tt.x,tt.y,px(8)+px(26)*k,0,6.3);ctx.stroke();}
   ctx.globalAlpha=1;
-  const bg=css('--map-bg'),ink=css('--ink');
+  const bg=css('--map-bg'),ink=css('--ink'),escuro=getComputedStyle(document.documentElement).colorScheme==='dark';
   for(const tt of S.totems){
-    const on=tt.id===sel,hv=tt.id===hover,r=px(on?9:hv?8:6.4);
+    const on=tt.id===sel,hv=tt.id===hover,esc=Math.min(1,.5+scale*.6),r=px((on?9:hv?8:6.4)*esc);
+    let fc,al=1;
+    if(mode==='cri')fc=CRE[tt.cur[0]].cor;else if(mode==='flx')fc=css('--accent');
+    else{const g=tt.eng[1]>25?tt.eng[0]/tt.eng[1]-1:null;fc=g==null?css('--muted'):g>=0?css('--good'):css('--bad');al=g==null?.6:.45+.55*Math.min(1,Math.abs(g)/.5);}
+    if(escuro){      // a luz do totem acesa na noite
+      const raio=px((on?34:26)*esc),gr=ctx.createRadialGradient(tt.x,tt.y,0,tt.x,tt.y,raio);
+      gr.addColorStop(0,fc);gr.addColorStop(1,'transparent');
+      ctx.globalAlpha=.34*al;ctx.fillStyle=gr;ctx.beginPath();ctx.arc(tt.x,tt.y,raio,0,6.3);ctx.fill();ctx.globalAlpha=1;
+    }
     ctx.beginPath();ctx.arc(tt.x,tt.y,r+px(2.2),0,6.3);ctx.fillStyle=on?ink:bg;ctx.fill();
     ctx.beginPath();ctx.arc(tt.x,tt.y,r,0,6.3);
-    let fc;
-    if(mode==='cri')fc=CRE[tt.cur[0]].cor;else if(mode==='flx')fc=css('--accent');
-    else{const g=tt.eng[1]>25?tt.eng[0]/tt.eng[1]-1:null;fc=g==null?css('--muted'):g>=0?css('--good'):css('--bad');ctx.globalAlpha=g==null?.6:.45+.55*Math.min(1,Math.abs(g)/.5);}
-    ctx.fillStyle=fc;ctx.fill();ctx.globalAlpha=1;
+    ctx.globalAlpha=al;ctx.fillStyle=fc;ctx.fill();ctx.globalAlpha=1;
   }
 }
 function pickTotem(ev){

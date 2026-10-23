@@ -16,7 +16,7 @@ function frame(now){
     while(debt>=1&&performance.now()-t0<10){step();debt--;}
     if(debt>60)debt=60;
   }
-  drawMap(now,dt);
+  if(vista3d&&G3)desenhar3d(now,dt);else drawMap(now,dt);
   if(now-lastUI>250){lastUI=now;renderUI(now);}
   requestAnimationFrame(frame);
 }
