@@ -24,6 +24,7 @@ Depois acesse http://localhost:8000.
 - **Cenários:** chuva, show, greve e feriado.
 - **Campanhas:** pausar e retomar criativos.
 - **Painel de anunciantes:** custo por interação e retorno estimado.
+- **Variação entre sementes:** roda várias cidades novas e mostra o ganho médio, o intervalo de 95% e o ganho de cada uma.
 
 ## Como o algoritmo decide
 
@@ -52,6 +53,7 @@ site/js/map.js                  mapa em canvas
 site/js/ui.js                   painel do totem, indicadores e gráfico
 site/js/calc.js                 menu de cálculos
 site/js/network.js              painel da rede, cenários e campanhas
+site/js/sementes.js             várias sementes: ganho médio e variação
 site/js/main.js                 laço de animação, controles e início
 tools/bundle.py                 junta tudo em dist/totens.html (arquivo único)
 examples/brain-demo.js          o Brain rodando no Node, com um mundo mínimo

@@ -15,7 +15,7 @@
 ## Simulador
 - [ ] Comparar duas configurações lado a lado.
 - [ ] Salvar e carregar cenários.
-- [ ] Rodar várias sementes e mostrar a variação do ganho.
+- [x] Rodar várias sementes e mostrar a variação do ganho.
 
 ## Dados reais
 - [ ] Definir o formato de evento do totem: contagem por perfil, criativo exibido e interações.

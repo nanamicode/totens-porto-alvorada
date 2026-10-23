@@ -119,3 +119,9 @@ test('quando o horário pesa muito, o contexto de período do dia aumenta o ganh
   assert.ok(est.min > 0.005, `pior semente: ${(est.min * 100).toFixed(2)} pontos`);
   assert.ok(est.media > 0.012, `diferença média: ${(est.media * 100).toFixed(2)} pontos`);
 });
+
+test('rodar várias sementes em sequência não deixa estado de uma na seguinte', () => {
+  const [a, b, c] = simular({ sementes: [1, 2, 1], steps: 300 });
+  assert.deepEqual(a, c);
+  assert.notDeepEqual(a.interacoes, b.interacoes);
+});

@@ -152,7 +152,7 @@ $('dSel').addEventListener('change',e=>select(+e.target.value));
 $('dPause').addEventListener('click',()=>setPlaying(!playing));
 $('dStep').addEventListener('click',()=>stepOnce());
 $('btnStep').addEventListener('click',()=>stepOnce());
-function stepOnce(){setPlaying(false);step();viewStep=null;renderUI(performance.now());}
+function stepOnce(){if(emLote)return;setPlaying(false);step();viewStep=null;renderUI(performance.now());}
 $('trPrev').addEventListener('click',()=>{const a=S.traces;if(!a.length)return;let i=viewStep==null?a.length-1:a.findIndex(x=>x.id===viewStep);if(i<0)i=0;viewStep=a[Math.max(0,i-1)].id;renderSpot();});
 $('trNext').addEventListener('click',()=>{const a=S.traces;if(!a.length||viewStep==null)return;const i=a.findIndex(x=>x.id===viewStep);if(i<0||i>=a.length-1){viewStep=null;}else viewStep=a[i+1].id;renderSpot();});
 $('trLive').addEventListener('click',()=>{viewStep=null;renderSpot();});
