@@ -78,11 +78,15 @@ function criarServidor(op, opcoes = {}) {
       if (rota === 'POST /decidir') {
         let pedido;
         try { pedido = JSON.parse(await lerCorpo(req)); } catch (e) { return responder(res, 400, { erro: 'o corpo não é JSON' }); }
-        try { return responder(res, 200, op.decidir(pedido)); } catch (e) { return responder(res, 404, { erro: e.message }); }
+        try { return responder(res, 200, op.decidir(pedido)); } catch (e) { return responder(res, e.pedido ? 400 : 404, { erro: e.message }); }
       }
       if (rota === 'POST /campanha') {
         let pedido;
         try { pedido = JSON.parse(await lerCorpo(req)); } catch (e) { return responder(res, 400, { erro: 'o corpo não é JSON' }); }
+        const extras = pedido && typeof pedido === 'object' ? Object.keys(pedido).filter(k => k !== 'criativo' && k !== 'ativa') : ['pedido'];
+        if (extras.length || typeof pedido.criativo !== 'string' || typeof pedido.ativa !== 'boolean') {
+          return responder(res, 400, { erro: 'o pedido de campanha só aceita criativo (texto) e ativa (verdadeiro ou falso)' });
+        }
         try { op.campanha(pedido.criativo, pedido.ativa); } catch (e) { return responder(res, 400, { erro: e.message }); }
         if (opcoes.aoMudar) opcoes.aoMudar();
         return responder(res, 200, op.estado());

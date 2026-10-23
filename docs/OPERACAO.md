@@ -43,7 +43,9 @@ curl -X POST --data-binary @docs/exemplos/eventos-exemplo.jsonl http://127.0.0.1
 curl -X POST -d '{"totem":"T-25","leitura":{"H35-49":3,"M25-34":2}}' http://127.0.0.1:8787/decidir
 ```
 
-Códigos de resposta: 200 certo (mesmo com alguns eventos recusados, que vêm listados), 400 pedido malformado, 401 sem token, 404 totem ou rota desconhecidos e 413 para corpo acima de 1 MB (este último sem teste).
+`POST /decidir` e `POST /campanha` só aceitam os campos descritos acima e contagens inteiras; qualquer campo a mais (uma imagem, um identificador) é recusado com 400 e não é devolvido na resposta. Veja [PRIVACIDADE.md](PRIVACIDADE.md).
+
+Códigos de resposta: 200 certo (mesmo com alguns eventos recusados, que vêm listados), 400 pedido malformado ou com campos que não existem, 401 sem token, 404 totem ou rota desconhecidos e 413 para corpo acima de 1 MB (este último sem teste).
 
 ## Usar como biblioteca
 
