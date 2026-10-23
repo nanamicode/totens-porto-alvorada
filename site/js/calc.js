@@ -124,7 +124,8 @@ posterior:   a = a_totem + ${PRM.kt}·μ_zona ;   b = (n_totem − a_totem) + ${
 amostra:     θ_s,c ~ Beta(a, b)
 audiência:   score_c = ( Σ_s n_s·θ_s,c / N ) × f̂_c × m_c,p ,     f̂_c = 0,35 + 0,65·exp(−r̂_totem·E_c / 600)
 decisão:     c* = argmax_c score_c
-aprendizado: n[s,c*] += 1 ; a[s,c*] += ${PRM.corrige||PRM.contexto?'1/('+(PRM.corrige?'f̂':'1')+(PRM.contexto?'·m':'')+')':'1'} se interagiu  (totem, zona e rede)
+aprendizado: n[s,c*] += 1 ; a[s,c*] += ${PRM.corrige||PRM.contexto?'1/('+(PRM.corrige?'f̂':'1')+(PRM.contexto?'·m':'')+')':'1'} se interagiu  (totem, zona e rede)${PRM.atraso>0?`
+             com atraso de conversão: "interagiu" passa a ser "converteu"; ${PRM.espera>0?`n e a entram juntos, ${n2(PRM.espera,1)} × ${PRM.atraso} min depois da exibição (conversão que chega depois da janela não conta)`:'n entra na hora e a só quando a conversão chega'}`:''}
 horário:     m_c,p = (H_c,p + ${PRM.kp}) / (X_c,p + ${PRM.kp}), normalizado para média 1 em cada criativo
              H = interações (corrigidas pelo desgaste), X = interações que a taxa média da rede previa, em 8 períodos de 3 h
 desgaste:    ${PRM.estima?'r̂_totem = média a posteriori de r numa grade de 0 a 2, com prior centrado em '+n2(PRM.rest)+' e verossimilhança Π Bernoulli( interagiu | μ_rede(s,c)·f(E; r) )':'r̂ = '+n2(PRM.rest)+' para todos os totens'}
@@ -143,6 +144,8 @@ const PARAMS=[
   {k:'corrige',l:'Corrigir o aprendizado pelo desgaste',min:0,max:1,step:1,f:v=>v?'ligado':'desligado',n:'Ligado, cada interação vale 1/f nas contagens, que passam a medir a taxa sem desgaste.'},
   {k:'contexto',l:'Usar o período do dia como contexto',min:0,max:1,step:1,f:v=>v?'ligado':'desligado',n:'Ligado, o algoritmo aprende um multiplicador por criativo e período do dia (8 períodos de 3 h).'},
   {k:'estima',l:'Estimar o desgaste de cada totem',min:0,max:1,step:1,f:v=>v?'ligado':'desligado',n:'Ligado, o algoritmo ajusta r̂ de cada totem aos dados. Desligado, usa o valor fixo.'},
+  {k:'atraso',l:'Atraso médio da conversão (minutos)',min:0,max:480,step:15,f:v=>v?v+' min':'desligado',n:'Ligado, cada interação converte com a chance do criativo e a conversão chega depois. O algoritmo passa a aprender com as conversões, não com o toque.'},
+  {k:'espera',l:'Esperar o resultado antes de aprender (× atraso)',min:0,max:6,step:.5,f:v=>v?'janela de '+n2(v,1)+' × o atraso':'conta já como falha',n:'0: o olhar entra na hora como falha e o acerto é somado quando chega. Acima de 0: o olhar e o resultado entram juntos depois da janela. Só vale com o atraso ligado.'},
   {k:'look',l:'Horizonte do oráculo (spots)',min:0,max:40,step:1,f:v=>v,n:'Só afeta a referência de 100%: quanto o oráculo antecipa o desgaste.'},
   {k:'cpm',l:'Preço por 1.000 olhares (R$)',min:5,max:60,step:1,f:v=>'R$ '+v,n:'Economia. Só afeta custo por interação e retorno no painel Anunciantes.'},
   {k:'val',l:'Valor de uma interação para o anunciante (R$)',min:1,max:30,step:1,f:v=>'R$ '+v,n:'Economia. Usado no retorno sobre o investimento.'},

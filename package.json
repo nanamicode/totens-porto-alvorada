@@ -10,6 +10,7 @@
     "eventos": "node tools/exportar-eventos.js",
     "comparar": "node tools/comparar.js",
     "cenario": "node tools/cenario.js",
+    "atraso": "node tools/atraso.js",
     "servidor": "node tools/servidor.js",
     "bundle": "python tools/bundle.py"
   },

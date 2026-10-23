@@ -1,12 +1,12 @@
 'use strict';
 /* Mundo simulado: estado global, criação da cidade e dos totens (a verdade que o algoritmo nunca vê). */
-let S,brain,rW,rB;       // estado do mundo, cérebro (Brain), geradores aleatórios
+let S,brain,rW,rB,rC;     // estado do mundo, cérebro (Brain), geradores aleatórios (mundo, cérebro, conversões)
 let viewStep=null,sel=0,playing=true,speed=10,mode='cri',ffTarget=0,showTruth=false;
 const ne=new Float64Array(NS),nt=new Float64Array(NS);
 const vT=new Int8Array(64),vU=new Int8Array(64),vR=new Float64Array(64);
 
 function init(seed){
-  rW=mulberry32(seed);rB=mulberry32(seed^0x9e3779b9);
+  rW=mulberry32(seed);rB=mulberry32(seed^0x9e3779b9);rC=mulberry32(seed^0x51ed270b);
   const totems=[];
   ZONES.forEach((z,zi)=>{
     let tries=0,count=0;
@@ -46,6 +46,6 @@ function init(seed){
   });
   const mk=n=>({a:new Float64Array(n),n:new Float64Array(n)});
   brain=Brain.create({nSeg:NS,nCre:NC,nZones:ZONES.length,nPeriods:8,zoneOf:totems.map(t=>t.zi),rng:rB,params:PRM,active:CON});
-  S={t:6*3600,step:0,totems,tot:{v:0,e:[0,0,0]},bins:[],bin:{v:0,e:[0,0,0]},binT:6*3600,hour:6,log:[],pulses:[],lines:[],traces:[],cs:[0,1,2].map(()=>({v:new Float64Array(NC),e:new Float64Array(NC),s:new Float64Array(NC)}))};
+  S={t:6*3600,step:0,totems,tot:{v:0,e:[0,0,0]},bins:[],bin:{v:0,e:[0,0,0]},binT:6*3600,hour:6,conv:[0,0,0],convPend:[0,0,0],convQ:new Map(),recQ:new Map(),log:[],pulses:[],lines:[],traces:[],cs:[0,1,2].map(()=>({v:new Float64Array(NC),e:new Float64Array(NC),s:new Float64Array(NC)}))};
   S.semente=seed;S.historico=[];S.config0=configAtual();
 }

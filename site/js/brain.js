@@ -6,6 +6,7 @@
    O que o cérebro recebe, e nada além disso:
      choose(totem, audiência por perfil, total de pessoas)  →  criativo a exibir
      learn(totem, perfil visto, criativo, interagiu?)       →  atualiza as contagens
+     learnLote / credit                                     →  o mesmo para resultados que chegam depois (docs/ALGORITMO.md)
    Ele nunca lê a taxa verdadeira, a zona (além do índice) nem o horário. */
 (function(root,factory){
   if(typeof module==='object'&&module.exports)module.exports=factory(require('./util.js'));
@@ -96,9 +97,10 @@
       return {c:b,run:s2,exp:bv};
     }
 
-    /* seg: perfil visto pela câmera · c: criativo exibido · hit: a pessoa interagiu */
-    function learn(i,seg,c,hit,per){
-      const k=seg*NC+c,t=T[i],Zc=Z[zoneOf[i]],e=E[i][c],f=fat(rest(i),e),m=mult(c,per);
+    /* seg: perfil visto pela câmera · c: criativo exibido · hit: a pessoa interagiu
+       eSnap (opcional): a exposição do criativo no momento em que foi exibido, para quando o resultado é aprendido depois */
+    function learn(i,seg,c,hit,per,eSnap){
+      const k=seg*NC+c,t=T[i],Zc=Z[zoneOf[i]],e=eSnap!==undefined?eSnap:E[i][c],f=fat(rest(i),e),m=mult(c,per);
       /* com corrige, cada interação vale 1/f; com contexto, também 1/m: as contagens medem a taxa sem desgaste e sem efeito do horário */
       const inc=hit?1/((P.corrige?f:1)*m):0;
       t.n[k]++;Zc.n[k]++;G.n[k]++;
@@ -114,10 +116,10 @@
 
     /* varias pessoas de uma vez: n olhares do perfil seg, com `hits` interações (pode ser fracionário,
        quando só se sabe o total e a repartição entre perfis é estimada). Para n = 1 faz o mesmo que learn. */
-    function learnLote(i,seg,c,n,hits,per){
+    function learnLote(i,seg,c,n,hits,per,eSnap){
       if(!(n>0))return 0;
       hits=Math.min(Math.max(hits,0),n);
-      const k=seg*NC+c,t=T[i],Zc=Z[zoneOf[i]],e=E[i][c],f=fat(rest(i),e),m=mult(c,per);
+      const k=seg*NC+c,t=T[i],Zc=Z[zoneOf[i]],e=eSnap!==undefined?eSnap:E[i][c],f=fat(rest(i),e),m=mult(c,per);
       const inc=hits/((P.corrige?f:1)*m);
       t.n[k]+=n;Zc.n[k]+=n;G.n[k]+=n;
       t.a[k]+=inc;Zc.a[k]+=inc;G.a[k]+=inc;
@@ -127,6 +129,15 @@
         const b=(G.a[k]+.2)/(G.n[k]+10),L=ll[i];
         for(let g=0;g<GRADE.length;g++){const p=Math.min(Math.max(b*m*mf[g],1e-4),.5);L[g]+=hits*Math.log(p)+(n-hits)*Math.log(1-p);}
       }
+      return inc;
+    }
+
+    /* resultado que chegou depois da exibição (conversão com atraso): só soma o acerto, sem contar outro olhar.
+       Serve a quem já contou o olhar como falha na hora da exibição (learn com hit=false); eSnap é a exposição daquela exibição. */
+    function credit(i,seg,c,per,eSnap){
+      const k=seg*NC+c,t=T[i],Zc=Z[zoneOf[i]],e=eSnap!==undefined?eSnap:E[i][c],f=fat(rest(i),e),m=mult(c,per);
+      const inc=1/((P.corrige?f:1)*m);
+      t.a[k]+=inc;Zc.a[k]+=inc;G.a[k]+=inc;
       return inc;
     }
 
@@ -172,7 +183,7 @@
       s.E.forEach((o,i)=>E[i].set(o));s.ll.forEach((o,i)=>ll[i].set(o));rHat.set(s.rHat);Mh.set(s.Mh);Mx.set(s.Mx);Mn.set(s.Mn);
     }
 
-    return {choose,learn,learnLote,forget,mean,globalMean,zoneMean,expose,decay,
+    return {choose,learn,learnLote,credit,forget,mean,globalMean,zoneMean,expose,decay,
       wear:(i,c)=>wearOf(i,E[i][c]),rest,setRest:fn=>{restFn=fn;},setPeriodFactor:fn=>{perFn=fn;},periodFactor:mult,periods:NP,exposure:i=>E[i],active,cells:{T,Z,G},params:P,exportar,importar};
   }
   return {create,DEFAULTS};

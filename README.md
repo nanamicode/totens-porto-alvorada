@@ -72,11 +72,13 @@ tests/brain.test.js             testes do Brain isolado
 tests/algoritmo.test.js         testes do algoritmo no simulador completo, com várias sementes
 tests/eventos.test.js           testes do formato de evento
 tests/comparacao.test.js        testes da comparação de configurações
+tests/atraso.test.js            testes da conversão com atraso
 tests/cenario.test.js           testes dos cenários salvos
 tests/operador.test.js          testes do Operador e do servidor
 tools/headless.js               roda o simulador sem navegador
 tools/avaliar.js                comando de avaliação com várias sementes
 tools/comparar.js               compara duas configurações nas mesmas sementes
+tools/atraso.js                  compara formas de aprender com conversões que chegam depois
 tools/cenario.js                refaz ou cria um cenário no terminal
 tools/exportar-eventos.js       gera eventos de spot do simulador em JSON Lines
 tools/servidor.js               servidor HTTP do Operador (protótipo)

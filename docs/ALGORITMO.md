@@ -33,6 +33,22 @@ horário:     opcional (contexto=1). score_c leva ainda o fator m_c,p, e a conta
 memória:     a, n ×= 0,985 a cada hora
 ```
 
+## Conversão com atraso
+
+Por padrão a recompensa é a interação imediata (toque ou QR). Com `atraso` maior que zero (minutos), a recompensa passa a ser a **conversão**, que chega depois:
+
+```
+mundo:        uma interação do criativo c converte com chance cv_c (de 10% a 45%) e a conversão chega d spots depois,
+              d ~ exponencial com média atraso × 2 × dl_c  (dl_c = 0,3 a 3: cinema converte rápido, cartão devagar)
+algoritmo:    "interagiu" passa a ser "converteu". Dois jeitos de lidar com o que ainda não chegou (parâmetro espera):
+  espera = 0  o olhar entra na hora como falha (n += 1) e, quando a conversão chega, soma só o acerto (a += 1/f̂ · brain.credit)
+  espera = k  o olhar e o resultado entram juntos (brain.learnLote) k × atraso depois da exibição; conversão que chega depois não conta
+  nos dois, o desgaste usado é o da hora da exibição, não o de quando o resultado chega
+oráculo:      passa a maximizar interações × cv_c
+```
+
+Com `atraso = 0` nada disso roda e o resultado é idêntico ao de antes. `Brain` oferece `learn`/`learnLote` com `eSnap` (a exposição na hora da exibição) e `credit`. O operador (`operador.js`) ainda não recebe conversões atrasadas: só o simulador as gera.
+
 ## Referências e métrica
 
 ```
@@ -46,5 +62,5 @@ ganho:        interações_algoritmo / interações_rotação − 1
 
 - O desgaste é estimado por totem. Por criativo ainda não, porque o mundo simulado não tem desgaste próprio de cada criativo.
 - O período do dia como contexto é opcional e vem desligado: no mundo simulado padrão o efeito do horário é pequeno e o contexto não ajuda de forma mensurável. Com o horário pesando 2 a 3 vezes mais, ele ajuda em todas as sementes.
-- A recompensa é a interação imediata (toque ou QR). Conversões com atraso não são tratadas.
+- A recompensa é a interação imediata (toque ou QR), a não ser que o atraso de conversão esteja ligado (veja acima). O formato de evento `spot` v1 ainda não carrega conversões, e o atraso do mundo simulado é exponencial: o real pode ter outra forma.
 - O oráculo é guloso e antecipa o desgaste só em parte, então a eficiência pode passar de 100%.

@@ -50,6 +50,9 @@ function renderKPIs(){
   $('kG').textContent=(g>=0?'+':'')+(g*100).toLocaleString('pt-BR',{maximumFractionDigits:0})+'%';
   const eff=effSeries(0),n=eff.length;
   $('kE').textContent=n?pc(eff[n-1],0):'–';
+  const cv=$('kConv'),cc=S.conv,cp=S.convPend,mostra=PRM.atraso>0||cc[0]+cp[0]>0;
+  cv.hidden=!mostra;
+  if(mostra){const tot=p=>cc[p]+cp[p];cv.textContent=`Conversões (atraso médio ${PRM.atraso} min): algoritmo ${fmt(cc[0])} chegaram e ${fmt(cp[0])} a caminho · rotação ${fmt(cc[1])} e ${fmt(cp[1])} · ganho ${tot(1)>0?((tot(0)/tot(1)-1)*100).toLocaleString('pt-BR',{maximumFractionDigits:0}):0}% contando as que ainda vão chegar`;}
 }
 function effSeries(p){
   const b=S.bins,out=[],WIN=12;
