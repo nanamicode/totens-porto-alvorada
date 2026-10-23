@@ -108,3 +108,14 @@ test('o desgaste estimado de cada totem acompanha o desgaste real', () => {
   const correlacao = sxy / Math.sqrt(sxx * syy);
   assert.ok(correlacao > 0.6, `correlação ${correlacao.toFixed(2)}`);
 });
+
+test('quando o horário pesa muito, o contexto de período do dia aumenta o ganho', () => {
+  const diffs = [11, 12, 13, 14].map(seed => {
+    const sem = simular({ seed, steps: DIA, escalaHorario: 3 });
+    const com = simular({ seed, steps: DIA, escalaHorario: 3, params: { contexto: 1 } });
+    return (com.interacoes[0] - sem.interacoes[0]) / sem.interacoes[1];
+  });
+  const est = estatistica(diffs);
+  assert.ok(est.min > 0.005, `pior semente: ${(est.min * 100).toFixed(2)} pontos`);
+  assert.ok(est.media > 0.012, `diferença média: ${(est.media * 100).toFixed(2)} pontos`);
+});

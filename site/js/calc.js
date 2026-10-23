@@ -42,9 +42,10 @@ b = (n_totem − a_totem) + K_totem·(1 − μ_zona)                 K_totem = $
     h+=`<details class="sd"${k<2?' open':''}><summary>${segLabel(s)} · n_s = ${N>0?tr.ne[s]:n2(tr.w[s],3)}${N===0?' (esperado)':''}</summary>${table(['Criativo','μ rede','n rede','μ zona','n zona','a','b','média','θ sorteado','n_s·θ'],rows)}</details>`;
   });
   h+='</section>';
-  h+=`<section class="calc"><h3><b>4</b>Pontuação e escolha (Thompson Sampling)</h3><pre>score_c = ( Σ_s n_s·θ_s,c / N ) × f̂_c            f̂_c = 0,35 + 0,65·exp(−r̂·E_c / 600)      r̂ do totem = ${n2(tr.rEst)}
+  h+=`<section class="calc"><h3><b>4</b>Pontuação e escolha (Thompson Sampling)</h3><pre>score_c = ( Σ_s n_s·θ_s,c / N ) × f̂_c × m_c,período            f̂_c = 0,35 + 0,65·exp(−r̂·E_c / 600)      r̂ do totem = ${n2(tr.rEst)}
+período do dia: ${PERIODOS[tr.per]??'–'}${PRM.contexto?'':'  (contexto de horário desligado: m = 1)'}
 escolhido = argmax score_c = ${CRE[tr.choice].nome}   (esperado ${pc(tr.exp,2)})</pre>
-    ${table(['Criativo','Σ n_s·θ','÷ N','Exposição E','Desgaste f̂','Score'],tr.raw.map((r,c)=>`<tr class="${c===tr.choice?'pick':c===tr.runner?'alt':''}"><td>${dotName(c)}${c===tr.choice?' ✔':c===tr.runner?' (2ª)':''}</td><td>${n2(r,3)}</td><td>${pc(r/tot,2)}</td><td>${fmt(tr.E[c])}</td><td>${n2(tr.fe[c],3)}</td><td>${pc(tr.v[c],2)}</td></tr>`))}</section>`;
+    ${table(['Criativo','Σ n_s·θ','÷ N','Exposição E','Desgaste f̂','Horário m','Score'],tr.raw.map((r,c)=>`<tr class="${c===tr.choice?'pick':c===tr.runner?'alt':''}"><td>${dotName(c)}${c===tr.choice?' ✔':c===tr.runner?' (2ª)':''}</td><td>${n2(r,3)}</td><td>${pc(r/tot,2)}</td><td>${fmt(tr.E[c])}</td><td>${n2(tr.fe[c],3)}</td><td>${n2(tr.mult[c],3)}</td><td>${pc(tr.v[c],2)}</td></tr>`))}</section>`;
   h+=`<section class="calc"><h3><b>5</b>Referências: rotação fixa e oráculo</h3><pre>rotação: criativo = (spot + 3·índice_totem) mod nº de campanhas ativas  →  ${CRE[tr.rot].nome}
 oráculo: usa a taxa verdadeira e a audiência verdadeira, com desgaste projetado ${PRM.look} spots à frente  →  ${CRE[tr.orc].nome}</pre>
     ${table(['Criativo','Taxa esperada do oráculo','Desgaste projetado'],tr.oV.map((v,c)=>`<tr class="${c===tr.orc?'pick':''}"><td>${dotName(c)}${c===tr.orc?' ✔':''}</td><td>${pc(v,2)}</td><td>${n2(tr.oF[c],3)}</td></tr>`))}</section>`;
@@ -54,11 +55,12 @@ interação  ⇔  u < p        (o mesmo sorteio u vale para os três, então a c
     ${table(['Política','Criativo','Desgaste real','Interações'],tr.out.map((o,p)=>`<tr><td>${pn[p]}</td><td>${dotName(o.c)}</td><td>${n2(o.f,3)}</td><td>${o.hits}</td></tr>`))}
     ${tr.rows.length?table(['Pessoa','Perfil real','Câmera viu','u','p (algoritmo)','Resultado'],tr.rows.map((r,k)=>`<tr><td>#${k+1}</td><td>${segLabel(r.ts)}</td><td>${segLabel(r.us)}${r.us!==r.ts?' ✗':''}</td><td>${n2(r.u,3)}</td><td>${pc(r.p,2)}</td><td class="${r.hit?'hit':'miss'}">${r.hit?'interagiu':'ignorou'}</td></tr>`)):''}</section>`;
   const ks=Object.keys(tr.upd);
-  h+=`<section class="calc"><h3><b>7</b>Aprendizado depois do spot</h3><pre>para cada pessoa: n[perfil visto pela câmera, criativo] += 1 ;  a[...] += ${PRM.corrige?'1/f̂ (a taxa sem desgaste)':'1'} se interagiu
+  h+=`<section class="calc"><h3><b>7</b>Aprendizado depois do spot</h3><pre>para cada pessoa: n[perfil visto pela câmera, criativo] += 1 ;  a[...] += ${PRM.corrige||PRM.contexto?'1/('+(PRM.corrige?'f̂':'1')+(PRM.contexto?'·m':'')+') (a taxa sem desgaste'+(PRM.contexto?' e sem efeito do horário':'')+')':'1'} se interagiu
 atualiza o totem, a zona e a rede ao mesmo tempo.  A cada hora: a, n ×= ${n2(PRM.forget,3)}</pre>
     ${ks.length?table(['Perfil visto','Criativo exibido','Olhares +n','Interações +a','Nova média do totem'],ks.map(s=>`<tr><td>${segLabel(+s)}</td><td>${dotName(tr.choice)}</td><td>+${tr.upd[s].n}</td><td>+${tr.upd[s].hit}${PRM.corrige&&tr.upd[s].hit?` (vale ${n2(tr.upd[s].a)})`:''}</td><td>${pc(tr.post[s][tr.choice],2)}</td></tr>`)):'<p class="hint">Sem olhares, sem aprendizado neste spot.</p>'}</section>`;
   el.innerHTML=h;
 }
+const PERIODOS=Array.from({length:8},(_,q)=>`${q*3}–${q*3+3}h`);
 function renderPost(){
   const tt=S.totems[sel],lvl=$('postLvl').value,G=brain.cells.G,Zc=brain.cells.Z[tt.zi],T=brain.cells.T[sel];
   let mx=.001;const cell=[];
@@ -72,7 +74,11 @@ function renderPost(){
   const rows=cell.map((r,s)=>{let bi=0;r.forEach((x,c)=>{if(x.m>r[bi].m)bi=c;});
     return `<tr><td>${segLabel(s)}</td>${r.map((x,c)=>`<td style="background:color-mix(in srgb,var(--accent) ${Math.round(6+55*Math.pow(x.m/mx,1.6))}%,transparent);${c===bi?'font-weight:700;outline:2px solid var(--ink);outline-offset:-2px':''}">${pc(x.m,2)}<br><span style="color:var(--muted)">±${n2(x.sd*100,2)} · ${fmt(x.n)}</span></td>`).join('')}</tr>`;});
   $('postBody').innerHTML=table(['Perfil',...CRE.map(c=>`<i class="dot" style="background:${c.cor}"></i>${c.nome.split(' ')[0]}`)],rows)+
-    `<p class="hint">Célula = média ± desvio · olhares acumulados (com esquecimento). Totem inspecionado: ${tt.nome}.</p>`;
+    `<p class="hint">Célula = média ± desvio · olhares acumulados (com esquecimento). Totem inspecionado: ${tt.nome}.</p>`+
+    `<h3 class="mini">Efeito do horário aprendido, igual para toda a rede</h3>`+
+    table(['Período',...CRE.map(c=>`<i class="dot" style="background:${c.cor}"></i>${c.nome.split(' ')[0]}`)],
+      PERIODOS.map((p,q)=>`<tr><td>${p}</td>${CRE.map((_,c)=>{const m=brain.periodFactor(c,q);return `<td style="${m>1.08?'font-weight:700;color:var(--good)':m<.92?'color:var(--bad)':''}">×${n2(m,2)}</td>`;}).join('')}</tr>`))+
+    `<p class="hint">Multiplica a taxa de cada criativo em cada período do dia. ${PRM.contexto?'':'O contexto de horário está desligado, então todos valem 1.'}</p>`;
 }
 function renderZonas(){
   const rows=ZONES.map((z,zi)=>{let v=0,e=[0,0,0],n=0;S.totems.forEach(t=>{if(t.zi===zi){n++;v+=t.views;for(let p=0;p<3;p++)e[p]+=t.eng[p];}});
@@ -99,9 +105,11 @@ prior rede:  μ_rede = (a_rede + 0,2) / (n_rede + 10)
 prior zona:  μ_zona = (a_zona + ${PRM.kz}·μ_rede) / (n_zona + ${PRM.kz})
 posterior:   a = a_totem + ${PRM.kt}·μ_zona ;   b = (n_totem − a_totem) + ${PRM.kt}·(1 − μ_zona)
 amostra:     θ_s,c ~ Beta(a, b)
-audiência:   score_c = ( Σ_s n_s·θ_s,c / N ) × f̂_c ,     f̂_c = 0,35 + 0,65·exp(−r̂_totem·E_c / 600)
+audiência:   score_c = ( Σ_s n_s·θ_s,c / N ) × f̂_c × m_c,p ,     f̂_c = 0,35 + 0,65·exp(−r̂_totem·E_c / 600)
 decisão:     c* = argmax_c score_c
-aprendizado: n[s,c*] += 1 ; a[s,c*] += ${PRM.corrige?'1/f̂':'1'} se interagiu  (totem, zona e rede)
+aprendizado: n[s,c*] += 1 ; a[s,c*] += ${PRM.corrige||PRM.contexto?'1/('+(PRM.corrige?'f̂':'1')+(PRM.contexto?'·m':'')+')':'1'} se interagiu  (totem, zona e rede)
+horário:     m_c,p = (H_c,p + ${PRM.kp}) / (X_c,p + ${PRM.kp}), normalizado para média 1 em cada criativo
+             H = interações (corrigidas pelo desgaste), X = interações que a taxa média da rede previa, em 8 períodos de 3 h
 desgaste:    ${PRM.estima?'r̂_totem = média a posteriori de r numa grade de 0 a 2, com prior centrado em '+n2(PRM.rest)+' e verossimilhança Π Bernoulli( interagiu | μ_rede(s,c)·f(E; r) )':'r̂ = '+n2(PRM.rest)+' para todos os totens'}
 memória:     a, n ×= ${n2(PRM.forget,3)} a cada hora</div></div>
   <div class="fgroup"><h3>Referências e métrica</h3><div class="formula">rotação fixa: c = campanha ativa número (spot + 3·totem) mod nº de ativas
@@ -116,6 +124,7 @@ const PARAMS=[
   {k:'forget',l:'Fator de esquecimento por hora',min:.95,max:1,step:.001,f:v=>n2(v,3),n:'1,000 = nunca esquece. Valores menores acompanham mudanças, mas guardam menos dados.'},
   {k:'rest',l:'Desgaste assumido pelo algoritmo (r̂)',min:0,max:1,step:.05,f:v=>n2(v),n:'Valor fixo, ou prior da estimativa quando ela está ligada. 0 = ignora o desgaste.'},
   {k:'corrige',l:'Corrigir o aprendizado pelo desgaste',min:0,max:1,step:1,f:v=>v?'ligado':'desligado',n:'Ligado, cada interação vale 1/f nas contagens, que passam a medir a taxa sem desgaste.'},
+  {k:'contexto',l:'Usar o período do dia como contexto',min:0,max:1,step:1,f:v=>v?'ligado':'desligado',n:'Ligado, o algoritmo aprende um multiplicador por criativo e período do dia (8 períodos de 3 h).'},
   {k:'estima',l:'Estimar o desgaste de cada totem',min:0,max:1,step:1,f:v=>v?'ligado':'desligado',n:'Ligado, o algoritmo ajusta r̂ de cada totem aos dados. Desligado, usa o valor fixo.'},
   {k:'look',l:'Horizonte do oráculo (spots)',min:0,max:40,step:1,f:v=>v,n:'Só afeta a referência de 100%: quanto o oráculo antecipa o desgaste.'},
   {k:'cpm',l:'Preço por 1.000 olhares (R$)',min:5,max:60,step:1,f:v=>'R$ '+v,n:'Economia. Só afeta custo por interação e retorno no painel Anunciantes.'},

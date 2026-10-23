@@ -35,7 +35,9 @@ function step(){
     }
     if(TR){TR.N=N;TR.nt=Array.from(nt);TR.ne=Array.from(ne);TR.err=err;TR.w=Array.from(w);}
     const aud=N>0?ne:w,tot=N>0?N:1;
-    const dec=brain.choose(i,aud,tot,TR),cA=dec.c,runner=dec.run,expA=dec.exp;
+    const per=(hI/3)|0;
+    if(TR)TR.per=per;
+    const dec=brain.choose(i,aud,tot,TR,per),cA=dec.c,runner=dec.run,expA=dec.exp;
     const cR=act[(S.step+i*3)%act.length];
     let cO=0,ov=-1;const oV=[],oF=[];
     for(let c=0;c<NC;c++){
@@ -53,7 +55,7 @@ function step(){
         const hit=u<tt.P[base+ch[p]]*fa[p];
         if(hit){tt.eng[p]++;S.tot.e[p]++;S.bin.e[p]++;hp[p]++;}
         if(p===0){
-          const inc=brain.learn(i,vU[v],cA,hit);
+          const inc=brain.learn(i,vU[v],cA,hit,per);
           if(TR){
             const u2=upd[vU[v]]||(upd[vU[v]]={n:0,hit:0,a:0});u2.n++;u2.a+=inc;if(hit)u2.hit++;
             if(TR.rows.length<16)TR.rows.push({ts:vT[v],us:vU[v],u,p:tt.P[base+ch[0]]*fa[0],hit});

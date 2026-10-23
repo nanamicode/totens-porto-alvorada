@@ -16,6 +16,8 @@ node tools/avaliar.js --evento=chuva,greve               # cenários
 node tools/avaliar.js --pausar=0,3                       # campanhas pausadas
 node tools/avaliar.js --acc=0.6 --rest=0 --forget=1      # câmera, desgaste, esquecimento
 node tools/avaliar.js --corrige=0 --estima=0             # comportamento anterior ao desgaste estimado
+node tools/avaliar.js --contexto=1 --horario=3           # período do dia como contexto, com o horário pesando 3 vezes mais
+node tools/avaliar.js --desgaste=2.5                     # desgaste do mundo 2,5 vezes maior
 ```
 
 `tools/headless.js` carrega os mesmos arquivos de `site/js` que o navegador usa (`util`, `config`, `world`, `brain` e `sim`) e roda o mundo, o Brain, a rotação fixa e o oráculo sem interface. Um dia simulado leva cerca de 2,5 s.
@@ -42,6 +44,7 @@ O ganho médio tem intervalo de 95% de 23,4% a 24,8%. Antes da issue 5 (`--corri
 - Compartilhar o aprendizado entre totens e zonas aumenta o ganho nas primeiras 6 horas em mais de 5 pontos.
 - O ganho se mantém nos cenários de chuva, show, greve e feriado, com câmera de 60% de acerto, e com campanhas pausadas.
 - Corrigir e estimar o desgaste supera o comportamento anterior em todas as sementes testadas, e o r̂ de cada totem tem correlação acima de 0,6 com o real.
+- Quando o horário pesa 3 vezes mais, o contexto de período do dia aumenta o ganho em todas as sementes testadas.
 - Parâmetros extremos (priors zerados, esquecimento nulo, desgaste de 0 a 1) não geram valores inválidos.
 
 Os limites dos testes ficam bem abaixo das medidas acima, para pegar regressões sem quebrar por ruído. Foi verificado que desligar o aprendizado derruba 6 desses testes.
@@ -75,6 +78,20 @@ Quase todo o ganho vem de corrigir o aprendizado. A estimativa por totem soma ce
 **Quão bem o desgaste é estimado.** A correlação entre r̂ e o r verdadeiro dos totens é 0,31 depois de 6 horas e 0,83 a 0,89 depois de 1 a 3 dias. O erro médio absoluto é de 0,13, contra 0,16 de usar 0,4 em todos. O estimador acerta a ordem dos totens melhor do que o valor absoluto, e nas primeiras horas ele ainda não sabe nada.
 
 **O desgaste por criativo não foi implementado.** No mundo simulado o desgaste varia por totem, não por criativo. Estimar uma diferença que não existe não pode ser verificado. Para isso, o primeiro passo seria dar a cada criativo uma taxa de desgaste própria no mundo simulado.
+
+**O período do dia vale pouco neste mundo, e muito quando o horário pesa.** A issue 4 acrescentou um contexto opcional de período do dia (`contexto=1`): um multiplicador por criativo e por período de 3 h (8 períodos), comum a toda a rede, com média 1 por criativo. Cada interação passa a valer 1/(f·m) nas contagens, para que elas meçam a taxa sem desgaste e sem efeito do horário. Não foi testada a alternativa de ter um conjunto de contagens inteiro por período.
+
+Diferença de ganho sobre a rotação com o contexto ligado, em pontos percentuais, com erro padrão, pareada por semente:
+
+| Efeito do horário no mundo | Contexto estimado | Se o algoritmo conhecesse o efeito exato |
+|---|---|---|
+| padrão (8 sementes) | +0,14 ± 0,32 | +0,55 ± 0,25 |
+| 2 vezes maior (6 sementes) | +0,90 ± 0,20 (todas positivas) | +1,43 ± 0,18 |
+| 3 vezes maior (6 sementes) | +2,22 ± 0,30 (todas positivas) | +1,77 ± 0,17 |
+
+No mundo padrão o efeito do horário é suave (no máximo 1,5 vez a taxa, num pico de 1 a 3 h), então a escolha do criativo quase nunca muda por causa dele: o espaço de melhora é de cerca de 0,5 ponto e o contexto não o alcança de forma mensurável. Nas 10 sementes de referência, o ganho foi de 24,1% sem o contexto e 23,9% com ele, e os perfis com o melhor criativo certo caíram de 7,5 para 7,1. Por isso o contexto vem **desligado por padrão**. Quando o efeito do horário é maior, o ganho aparece em todas as sementes. A coluna da direita é uma aproximação (efeito médio de cada período), por isso o estimado pode passar dela.
+
+Para ligar: `contexto` no menu Cálculos > Parâmetros, ou `node tools/avaliar.js --contexto=1 --horario=3`. Só vale ligar se houver evidência, nos dados reais, de que a resposta aos criativos muda com o horário.
 
 **Esquecer não ajudou dentro de 1 dia.** Com `forget=1` (nunca esquece) o ganho foi de 23,5%. O mundo simulado não muda de verdade ao longo do dia, então esquecer só descarta dados. Em um mundo que muda, o resultado pode ser outro.
 

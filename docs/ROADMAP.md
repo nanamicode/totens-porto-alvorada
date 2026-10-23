@@ -6,7 +6,7 @@
 - [x] Testes automáticos do algoritmo: convergência, acerto do melhor criativo por perfil e comparação com a rotação, com várias sementes.
 
 ## Algoritmo
-- [ ] Período do dia como contexto.
+- [x] Período do dia como contexto. Opcional e desligado por padrão: só ajuda quando o efeito do horário é forte.
 - [x] Estimar o desgaste por totem, em vez de um valor genérico. Falta o desgaste por criativo, que o mundo simulado ainda não tem.
 - [ ] Recompensa com atraso (conversão depois da interação).
 - [ ] Criativos novos entrando no meio da operação (partida a frio).
