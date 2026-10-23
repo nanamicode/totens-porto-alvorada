@@ -171,7 +171,7 @@ O que isso diz, neste mundo simulado:
 O que isso diz, neste mundo simulado:
 - **O desempenho puro não cumpre as metas**: o algoritmo concentra os spots nas campanhas que mais rendem e deixa a pior com menos da metade do contratado. Até a rotação fixa cumpre mais (90,1%), por ser uniforme.
 - **Cumprir as metas custa cerca de 10 pontos de ganho** (de 26% para 15,4%), e o algoritmo continua bem à frente da rotação.
-- **Parte do efeito vem só do teto de orçamento** (que tira do jogo quem já gastou). O peso por ritmo recupera 3 pontos de ganho sobre o teto sozinho (12% para 15,4%), porque segura as campanhas fortes ao longo do dia em vez de queimar o orçamento cedo e forçar as fracas no fim. A força 1 é o melhor ponto medido; a 2 já perde um pouco.
+- **Parte do efeito vem só do teto de orçamento** (que tira do jogo quem já gastou). O peso por ritmo recupera 3 pontos de ganho sobre o teto sozinho (12% para 15,4%), provavelmente porque segura as campanhas fortes ao longo do dia em vez de queimar o orçamento cedo e forçar as fracas no fim (não medi o motivo). A força 1 é o melhor ponto medido; a 2 já perde um pouco.
 - **Olhares além do orçamento**: 10,2% é praticamente o mínimo possível aqui, porque os orçamentos somam menos do que a capacidade da rede (cerca de 462 mil olhares contra 520 mil): sobra tráfego que alguém precisa exibir. Sem equilíbrio, o algoritmo entrega 28,9% além do que os anunciantes pagam.
 - Cinco sementes e um conjunto de metas. Metas maiores que a capacidade (use `metaEsc`) não podem ser cumpridas por ninguém, e o que o equilíbrio faz nesse caso (reparte o atraso) não foi medido. As metas, o orçamento e o 80% do primeiro dia são escolhas minhas, não dados reais.
 
