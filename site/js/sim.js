@@ -2,7 +2,6 @@
 /* Simulação: passo de 30 s que une mundo, algoritmo, rotação fixa e oráculo, com rastreio dos cálculos. */
 /* ---------- Passo da simulação: 30 s ---------- */
 const DE=Math.exp(-Math.LN2*.5/150),DS=Math.exp(-Math.LN2*.5/180);
-const f2=(x,d=2)=>Number(x).toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d});
 function stampOf(t){const day=Math.floor(t/86400),s=t%86400;return DIAS[day%7]+' '+String(Math.floor(s/3600)).padStart(2,'0')+':'+String(Math.floor(s/60%60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');}
 function pushLine(k,x){S.lines.push({k,t:stampOf(S.t),x});if(S.lines.length>500)S.lines.shift();}
 function step(){

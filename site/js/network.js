@@ -16,7 +16,7 @@ function zoneBest(){
     S.totems.forEach(t=>{if(t.zi===zi)for(let s=0;s<NS;s++){sh[s]+=t.recent[s];tot+=t.recent[s];}});
     if(tot<=0)return null;
     const Zc=brain.cells.Z[zi],G=brain.cells.G,sc=[];
-    for(let c=0;c<NC;c++){let v=0;for(let s=0;s<NS;s++){const k=s*NC+c,gm=(G.a[k]+.2)/(G.n[k]+10);v+=sh[s]/tot*(Zc.a[k]+PRM.kz*gm)/(Zc.n[k]+PRM.kz);}sc.push(v);}
+    for(let c=0;c<NC;c++){let v=0;for(let s=0;s<NS;s++){v+=sh[s]/tot*brain.zoneMean(zi,s,c);}sc.push(v);}
     const order=[...sc.keys()].filter(c=>CON[c]).sort((a,b)=>sc[b]-sc[a]);
     let dom=0;for(let s=1;s<NS;s++)if(sh[s]>sh[dom])dom=s;
     return {z,best:order[0],second:order[1],v:sc[order[0]],v2:order[1]!=null?sc[order[1]]:0,dom,pct:sh[dom]/tot};

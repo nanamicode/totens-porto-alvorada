@@ -3,7 +3,7 @@
 ## Organização do código
 - [x] Separar `site/index.html` em módulos: mundo simulado, algoritmo, interface e menu de cálculos.
 - [x] Mover o algoritmo (`Brain`) para um módulo sem dependência de interface, pronto para rodar fora do navegador.
-- [ ] Testes automáticos do algoritmo: convergência, acerto do melhor criativo por perfil e comparação com a rotação, com várias sementes.
+- [x] Testes automáticos do algoritmo: convergência, acerto do melhor criativo por perfil e comparação com a rotação, com várias sementes.
 
 ## Algoritmo
 - [ ] Período do dia como contexto.

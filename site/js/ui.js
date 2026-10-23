@@ -2,9 +2,6 @@
 /* Interface: painel do totem, indicadores, tabela de aprendizado, registro de trocas e gráfico de eficiência. */
 /* ---------- Interface ---------- */
 const $=id=>document.getElementById(id);
-const fmt=n=>Math.round(n).toLocaleString('pt-BR');
-const pc=(x,d=1)=>(x*100).toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d})+'%';
-const per1k=(e,v)=>v>0?(1000*e/v).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1}):'–';
 function qrURL(seed){
   const r=mulberry32(seed*97+3);let s='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 9 9" shape-rendering="crispEdges"><rect width="9" height="9" fill="#fff"/>';
   const fin=(x,y)=>`<rect x="${x}" y="${y}" width="3" height="3" fill="#111"/><rect x="${x+.5}" y="${y+.5}" width="2" height="2" fill="#fff"/><rect x="${x+1}" y="${y+1}" width="1" height="1" fill="#111"/>`;
