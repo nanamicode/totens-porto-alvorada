@@ -1,0 +1,1104 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Totens de Porto Alvorada</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Schibsted+Grotesk:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: mapa da cidade à esquerda, painel do totem selecionado à direita; abaixo, aprendizado da rede. */
+:root{
+  --bg:#edf0f2; --panel:#f8fafb; --ink:#13202a; --muted:#566673; --line:#cfd7dd;
+  --accent:#0a6c74; --accent-ink:#ffffff; --good:#17794a; --bad:#b4412c;
+  --map-bg:#dfe6ea; --map-block:#f3f6f7; --map-block2:#e9eef0; --map-road:#ffffff;
+  --map-river:#b7d1e0; --map-park:#c9e0c5; --map-label:#6a7b87; --dot-m:#2b86c5; --dot-f:#d2497f;
+  --font:"Schibsted Grotesk",system-ui,sans-serif; --mono:"DM Mono",ui-monospace,Menlo,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0c1217; --panel:#121b22; --ink:#e7eef2; --muted:#8c9eaa; --line:#25333d;
+    --accent:#4cc3c9; --accent-ink:#06191b; --good:#5fd08f; --bad:#ff8a73;
+    --map-bg:#0f171d; --map-block:#18242d; --map-block2:#1d2b35; --map-road:#090e12;
+    --map-river:#143349; --map-park:#173528; --map-label:#7d909c; --dot-m:#5db6f0; --dot-f:#f08ab6;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c1217; --panel:#121b22; --ink:#e7eef2; --muted:#8c9eaa; --line:#25333d;
+  --accent:#4cc3c9; --accent-ink:#06191b; --good:#5fd08f; --bad:#ff8a73;
+  --map-bg:#0f171d; --map-block:#18242d; --map-block2:#1d2b35; --map-road:#090e12;
+  --map-river:#143349; --map-park:#173528; --map-label:#7d909c; --dot-m:#5db6f0; --dot-f:#f08ab6;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:14px;line-height:1.45;
+  padding-block:20px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1360px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+h1,h2,h3,p{margin:0}
+button,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.top{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.top h1{font-size:clamp(26px,4vw,38px);font-weight:800;letter-spacing:-.02em;line-height:1.05;text-wrap:balance}
+.top p{color:var(--muted);margin-top:6px;max-width:60ch}
+.clock{display:flex;align-items:baseline;gap:10px;font-family:var(--mono)}
+.clock .day{color:var(--muted);text-transform:uppercase;letter-spacing:.12em;font-size:12px}
+.clock b{font-size:34px;font-weight:500;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+
+.controls{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center}
+.group{display:flex;align-items:center;gap:8px;min-width:0}
+.group>span{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.1em}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--panel)}
+.seg button{border:0;background:transparent;padding:7px 12px;cursor:pointer;font-size:13px;font-family:var(--mono)}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.btn{border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:7px 14px;cursor:pointer;font-size:13px;font-weight:600}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);min-width:92px}
+.btn:hover{border-color:var(--accent)}
+
+.kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));border-block:1px solid var(--line)}
+.kpi{padding:12px 14px;min-width:0}
+.kpi+.kpi{border-left:1px solid var(--line)}
+.kpi small{display:block;color:var(--muted);font-size:11.5px;text-transform:uppercase;letter-spacing:.08em}
+.kpi b{display:block;font-family:var(--mono);font-weight:500;font-size:24px;letter-spacing:-.02em;font-variant-numeric:tabular-nums;margin-top:2px}
+.kpi span{color:var(--muted);font-size:12px;font-family:var(--mono)}
+.kpi.hl b{color:var(--good)}
+
+.stage{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:18px;align-items:start}
+.mapwrap{position:relative;min-width:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--map-bg)}
+#map{display:block;width:100%;cursor:pointer;touch-action:manipulation}
+#tip{position:absolute;pointer-events:none;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 9px;font-size:12px;line-height:1.35;box-shadow:0 4px 18px rgba(0,0,0,.18);max-width:220px;display:none;z-index:3}
+#tip b{display:block}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;padding:10px 12px;border-top:1px solid var(--line);background:var(--panel);font-size:12px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+.legend span{white-space:nowrap}
+.legend em{font-style:normal;font-family:var(--mono);color:var(--muted);margin-left:4px}
+.legend .sep{flex-basis:100%;height:0}
+.legend .people{color:var(--muted)}
+
+.panel{border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:14px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.panel select{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
+.ptitle h2{font-size:18px;font-weight:700;letter-spacing:-.01em}
+.ptitle p{color:var(--muted);font-size:12.5px;font-family:var(--mono)}
+.screen{position:relative;border-radius:8px;padding:16px;min-height:150px;color:#fff;display:flex;flex-direction:column;justify-content:flex-end;gap:2px;overflow:hidden;
+  background:linear-gradient(155deg,var(--c1),var(--c2));border:6px solid #1a1f24}
+.screen .k{position:absolute;top:10px;left:14px;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;opacity:.85}
+.screen .n{font-size:24px;font-weight:800;letter-spacing:-.02em;line-height:1.05;max-width:11ch;text-shadow:0 1px 8px rgba(0,0,0,.25)}
+.screen .t{font-size:13px;opacity:.95;max-width:20ch}
+.screen .qr{position:absolute;right:12px;bottom:12px;width:54px;height:54px;border-radius:4px;background-color:#fff;background-size:cover}
+.sub{display:flex;flex-direction:column;gap:8px}
+.sub h3{font-size:11.5px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:600;display:flex;justify-content:space-between;gap:8px}
+.sub h3 em{font-style:normal;text-transform:none;letter-spacing:0;font-family:var(--mono)}
+.bars{display:grid;grid-template-columns:96px minmax(0,1fr) 38px;gap:4px 8px;align-items:center;font-size:12.5px}
+.bars .l{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bars .b{height:8px;background:var(--line);border-radius:4px;overflow:hidden}
+.bars .b i{display:block;height:100%;background:var(--accent);border-radius:4px}
+.bars .v{font-family:var(--mono);text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
+.hours{display:flex;align-items:flex-end;gap:2px;height:44px}
+.hours i{flex:1;background:var(--line);border-radius:2px 2px 0 0;min-height:2px}
+.hours i.now{background:var(--accent)}
+.hlab{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10.5px;color:var(--muted)}
+.learn{display:flex;flex-direction:column;gap:6px;font-size:13px}
+.learn div{display:flex;align-items:center;gap:8px;min-width:0}
+.learn i{width:10px;height:10px;border-radius:50%;flex:none}
+.learn span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.learn b{margin-left:auto;font-family:var(--mono);font-weight:500;white-space:nowrap}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.pair div{border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.pair small{display:block;color:var(--muted);font-size:11.5px}
+.pair b{font-family:var(--mono);font-weight:500;font-size:18px}
+.meter{height:8px;border-radius:4px;background:var(--line);overflow:hidden}
+.meter i{display:block;height:100%;background:var(--bad)}
+
+.lower{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1.3fr) minmax(0,1fr);gap:18px;align-items:start}
+.card{border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:14px;min-width:0;display:flex;flex-direction:column;gap:10px}
+.card h2{font-size:15px;font-weight:700}
+.card .hint{color:var(--muted);font-size:12.5px}
+#chart{width:100%;height:210px;display:block}
+.tablewrap{overflow-x:auto}
+table.heat{border-collapse:separate;border-spacing:2px;width:100%;font-size:12px;min-width:430px}
+.heat th{font-weight:500;color:var(--muted);text-align:left;white-space:nowrap}
+.heat thead th{text-align:center;font-size:10.5px;line-height:1.15;vertical-align:bottom;padding-bottom:4px}
+.heat thead i{display:block;width:9px;height:9px;border-radius:50%;margin:0 auto 3px}
+.heat td{text-align:center;font-family:var(--mono);padding:5px 2px;border-radius:4px;font-variant-numeric:tabular-nums}
+.heat td.best{outline:2px solid var(--ink);outline-offset:-2px;font-weight:500}
+.heat td small{display:block;font-size:10px;color:var(--muted);opacity:.95}
+.check{display:flex;gap:8px;align-items:center;font-size:12.5px;color:var(--muted)}
+.log{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;font-size:12.5px}
+.log li{display:grid;grid-template-columns:10px minmax(0,1fr);gap:8px}
+.log i{width:10px;height:10px;border-radius:50%;margin-top:4px}
+.log b{font-weight:600}
+.log small{display:block;color:var(--muted);font-family:var(--mono);font-size:11px}
+
+.notes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.notes div{border-top:2px solid var(--ink);padding-top:10px}
+.notes h3{font-size:14px;margin-bottom:4px}
+.notes p{color:var(--muted);font-size:13px}
+.notes code{font-family:var(--mono);font-size:12px;color:var(--ink)}
+
+@media (max-width:1100px){.lower{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.lower .card:last-child{grid-column:1/-1}}
+@media (max-width:900px){.stage{grid-template-columns:minmax(0,1fr)}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.kpi:nth-child(3){border-left:0}.kpi{border-top:1px solid var(--line)}.kpi:nth-child(-n+2){border-top:0}.notes{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:640px){.lower{grid-template-columns:minmax(0,1fr)}.clock b{font-size:28px}.bars{grid-template-columns:88px minmax(0,1fr) 36px}}
+
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(800px,100vw);z-index:30;background:var(--panel);border-left:1px solid var(--line);box-shadow:-14px 0 44px rgba(0,0,0,.3);display:flex;flex-direction:column;
+  padding-top:env(safe-area-inset-top,0px);padding-right:env(safe-area-inset-right,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.dhead{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;padding:14px 16px 8px}
+.dhead h2{font-size:18px;font-weight:800}.dhead p{color:var(--muted);font-size:12.5px;margin-top:2px;max-width:56ch}
+.dbar{display:flex;gap:8px;padding:6px 16px 10px;flex-wrap:wrap}
+.dbar select{flex:1;min-width:160px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
+.tabs{display:flex;gap:2px;padding:0 12px;border-bottom:1px solid var(--line);overflow-x:auto}
+.tabs button{border:0;background:transparent;padding:9px 12px;cursor:pointer;font-size:13px;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.dbody{flex:1;overflow:auto;padding:14px 16px 28px;min-width:0}
+.dbody>div{display:flex;flex-direction:column;gap:14px;min-width:0}
+.dbody .nav{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.dbody .nav select{padding:5px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg)}
+.calc{display:flex;flex-direction:column;gap:8px;min-width:0}
+.calc h3{font-size:14px;display:flex;align-items:center;gap:8px}
+.calc h3 b{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-family:var(--mono);font-size:12px;font-weight:500}
+.calc pre,.formula{margin:0;font-family:var(--mono);font-size:12px;line-height:1.55;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;white-space:pre-wrap;overflow-wrap:anywhere}
+.calc .hint,.dbody .hint{color:var(--muted);font-size:12.5px}
+table.ct{border-collapse:collapse;width:100%;font-size:12px;min-width:520px}
+.ct th,.ct td{padding:4px 8px;border-bottom:1px solid var(--line);text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.ct th:first-child,.ct td:first-child{text-align:left;font-family:var(--font)}
+.ct thead th{color:var(--muted);font-weight:500;font-size:11px;vertical-align:bottom;white-space:normal}
+.ct tr.pick td{background:color-mix(in srgb,var(--accent) 18%,transparent);font-weight:500}
+.ct tr.alt td{background:color-mix(in srgb,var(--muted) 12%,transparent)}
+.ct td.hit{color:var(--good);font-weight:500}.ct td.miss{color:var(--muted)}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}
+details.sd{border:1px solid var(--line);border-radius:8px;padding:6px 10px}
+details.sd summary{cursor:pointer;font-size:13px;font-weight:600;padding:2px 0}
+details.sd .tablewrap{margin-top:6px}
+.logbox{border:1px solid var(--line);border-radius:8px;background:var(--bg);height:min(62vh,560px);overflow:auto;font-family:var(--mono);font-size:11.5px;line-height:1.5;padding:8px 10px}
+.logbox div{padding:2px 0;border-bottom:1px dashed var(--line);overflow-wrap:anywhere}
+.logbox .t{color:var(--muted)}.logbox .k{display:inline-block;min-width:54px;text-transform:uppercase;font-size:10px;letter-spacing:.06em;color:var(--accent)}
+.logbox .troca .k{color:var(--dot-f)}.logbox .esq .k{color:var(--bad)}.logbox .marco .k{color:var(--good)}
+.params{display:flex;flex-direction:column;gap:14px}
+.prm{display:grid;grid-template-columns:minmax(0,1fr) 70px;gap:2px 10px;align-items:center}
+.prm label{font-size:13px;font-weight:600}.prm output{font-family:var(--mono);text-align:right}
+.prm input{grid-column:1/-1;width:100%;accent-color:var(--accent)}
+.prm small{grid-column:1/-1;color:var(--muted);font-size:12px}
+#copyArea{width:100%;font-family:var(--mono);font-size:11px;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px}
+.formula .c{color:var(--muted)}
+.fgroup{display:flex;flex-direction:column;gap:6px}.fgroup h3{font-size:14px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:3px 10px;cursor:pointer;font-size:12px}
+.chip i{margin-right:0!important}
+.chip[aria-pressed="false"]{opacity:.45;text-decoration:line-through}
+.net{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) minmax(0,1fr);gap:18px;align-items:start}
+.rowh{display:flex;justify-content:space-between;align-items:center;gap:10px}
+h3.mini{font-size:11.5px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:600;margin:10px 0 4px}
+.rk{display:flex;gap:8px;align-items:center;width:100%;border:0;border-bottom:1px dashed var(--line);background:transparent;padding:5px 0;text-align:left;cursor:pointer;font-size:13px}
+.rk span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rk b{margin-left:auto;font-family:var(--mono);font-weight:500}.rk b.up{color:var(--good)}.rk b.dn{color:var(--bad)}
+.rk:hover span{text-decoration:underline}
+#csvArea{width:100%;font-family:var(--mono);font-size:11px;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px}
+@media (max-width:1100px){.net{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.net .card:first-child{grid-column:1/-1}}
+@media (max-width:640px){.net{grid-template-columns:minmax(0,1fr)}}
+</style>
+
+<style>[hidden]{display:none!important}body{margin:0}</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Totens de Porto Alvorada</h1>
+      <p>Uma cidade fictícia com 42 totens digitais. Cada totem conta quem passa, escolhe o criativo e aprende com as interações. Todos os dados são sintéticos.</p>
+    </div>
+    <div class="clock" aria-live="off"><span class="day" id="clkDay">Seg</span><b id="clkTime">06:00</b></div>
+  </header>
+
+  <section class="controls" aria-label="Controles da simulação">
+    <button class="btn primary" id="btnPlay" type="button">Pausar</button>
+    <div class="group"><span>Ritmo</span>
+      <div class="seg" id="segSpeed" role="group" aria-label="Ritmo da simulação">
+        <button type="button" data-v="1" aria-pressed="false">1 min/s</button>
+        <button type="button" data-v="10" aria-pressed="true">10 min/s</button>
+        <button type="button" data-v="30" aria-pressed="false">30 min/s</button>
+        <button type="button" data-v="120" aria-pressed="false">120 min/s</button>
+      </div>
+    </div>
+    <div class="group"><span>Mapa</span>
+      <div class="seg" id="segMode" role="group" aria-label="Modo do mapa">
+        <button type="button" data-v="cri" aria-pressed="true">Criativo</button>
+        <button type="button" data-v="flx" aria-pressed="false">Fluxo</button>
+        <button type="button" data-v="gan" aria-pressed="false">Ganho</button>
+      </div>
+    </div>
+    <div class="group"><span>Cenário</span>
+      <div class="seg" id="segEv" role="group" aria-label="Eventos na cidade">
+        <button type="button" data-v="chuva" aria-pressed="false" title="Chuva forte: esvazia o parque e leva gente ao shopping">Chuva</button>
+        <button type="button" data-v="show" aria-pressed="false" title="Show na Praça da Música: o fluxo da noite mais que dobra">Show</button>
+        <button type="button" data-v="greve" aria-pressed="false" title="Greve na estação: o fluxo cai a 30%">Greve</button>
+        <button type="button" data-v="feriado" aria-pressed="false" title="Feriado: a cidade se comporta como num fim de semana">Feriado</button>
+      </div>
+    </div>
+    <button class="btn" id="btnDay" type="button">Avançar 1 dia</button>
+    <button class="btn" id="btnReset" type="button">Reiniciar</button>
+    <button class="btn" id="btnStep" type="button">+1 spot</button>
+    <button class="btn primary" id="btnCalc" type="button" aria-expanded="false" aria-controls="drawer">Cálculos</button>
+    <span id="ffMsg" class="hint" style="color:var(--muted);font-size:12.5px"></span>
+  </section>
+
+  <section class="kpis" aria-label="Resultados acumulados">
+    <div class="kpi"><small>Olhares na tela</small><b id="kViews">0</b><span id="kViewsS">pessoas contadas</span></div>
+    <div class="kpi"><small>Interações · algoritmo</small><b id="kA">0</b><span id="kAs">0,0 por 1.000 olhares</span></div>
+    <div class="kpi"><small>Interações · rotação fixa</small><b id="kR">0</b><span id="kRs">0,0 por 1.000 olhares</span></div>
+    <div class="kpi hl"><small>Ganho sobre a rotação</small><b id="kG">+0%</b><span>mesma audiência nos dois</span></div>
+    <div class="kpi"><small>Eficiência · últimas 3 h</small><b id="kE">–</b><span>% do melhor possível</span></div>
+  </section>
+
+  <main class="stage">
+    <div class="mapwrap">
+      <canvas id="map" role="img" aria-label="Mapa de Porto Alvorada com 42 totens. Selecione um totem para ver os detalhes."></canvas>
+      <div id="tip"></div>
+      <div class="legend" id="legend"></div>
+    </div>
+
+    <aside class="panel" aria-label="Totem selecionado">
+      <label class="sub"><h3>Totem</h3><select id="selTotem"></select></label>
+      <div class="ptitle"><h2 id="pName">–</h2><p id="pMeta">–</p></div>
+      <div class="screen" id="scr"><span class="k" id="scrK">Na tela agora</span><div class="n" id="scrN">–</div><div class="t" id="scrT"></div><div class="qr" id="scrQ"></div></div>
+      <div class="sub"><h3>Audiência agora <em id="pAud">–</em></h3>
+        <div class="meter" title="Desgaste estimado do criativo atual"><i id="pFat" style="width:0"></i></div>
+        <div class="hint" id="pFatT" style="color:var(--muted);font-size:12px"></div>
+      </div>
+      <div class="sub"><h3>Perfil estimado <em>últimas 3 h</em></h3><div class="bars" id="pDemo"></div></div>
+      <div class="sub"><h3>Olhares por spot <em>média por hora</em></h3><div class="hours" id="pHours"></div><div class="hlab"><span>0h</span><span>6h</span><span>12h</span><span>18h</span><span>23h</span></div></div>
+      <div class="sub"><h3>O que este totem aprendeu <em>por perfil</em></h3><div class="learn" id="pLearn"></div></div>
+      <div class="pair">
+        <div><small>Algoritmo</small><b id="pA">–</b><small>por 1.000 olhares</small></div>
+        <div><small>Rotação fixa</small><b id="pR">–</b><small>por 1.000 olhares</small></div>
+      </div>
+    </aside>
+  </main>
+
+  <section class="net" aria-label="Painel da rede">
+    <div class="card">
+      <div class="rowh"><h2>Anunciantes</h2><button class="btn" id="csvCopy" type="button">Copiar CSV</button></div>
+      <p class="hint" id="econSum"></p>
+      <div class="tablewrap" id="advBody"></div>
+      <textarea id="csvArea" readonly hidden rows="6" aria-label="CSV para copiar"></textarea>
+    </div>
+    <div class="card">
+      <h2>Melhor criativo por zona</h2>
+      <p class="hint">O que a rede aprendeu para o público de cada zona.</p>
+      <div class="learn" id="zoneBest"></div>
+    </div>
+    <div class="card">
+      <h2>Totens em foco</h2>
+      <p class="hint">Ganho sobre a rotação, a partir de 300 olhares. Clique para abrir o totem.</p>
+      <div id="rankBody"></div>
+      <h3 class="mini">Desgaste em alerta</h3>
+      <div id="wearBody"></div>
+    </div>
+  </section>
+
+  <section class="lower">
+
+    <div class="card">
+      <h2>Quanto do melhor possível a rede alcança</h2>
+      <p class="hint">Interações do algoritmo e da rotação fixa, em % das que um oráculo (que conhece a verdade) teria obtido. Janela móvel de 3 h.</p>
+      <canvas id="chart" role="img" aria-label="Gráfico de eficiência do algoritmo e da rotação fixa em relação ao oráculo ao longo do tempo"></canvas>
+    </div>
+    <div class="card">
+      <h2>O que a rede aprendeu</h2>
+      <p class="hint">Taxa de interação estimada por perfil e criativo, somando todos os totens. O destaque marca o melhor criativo de cada perfil.</p>
+      <div class="tablewrap" id="heatWrap"></div>
+      <label class="check"><input type="checkbox" id="chkTruth"> Comparar com a taxa verdadeira (oculta do algoritmo)</label>
+    </div>
+    <div class="card">
+      <h2>Decisões recentes</h2>
+      <p class="hint">Quando um totem troca de criativo, com a audiência que a câmera viu.</p>
+      <ul class="log" id="log"></ul>
+    </div>
+  </section>
+
+  <section class="notes" aria-label="Do simulado ao real">
+    <div><h3>O algoritmo só sabe o que um totem sabe</h3><p>Ele vê a contagem de pessoas e o perfil estimado por uma câmera que erra parte das faixas etárias, e vê as interações (toque ou QR). Nunca lê a taxa verdadeira, a zona ou o horário.</p></div>
+    <div><h3>Como ele decide a cada spot de 30 s</h3><p>Thompson Sampling contextual: sorteia uma taxa para cada perfil e criativo, pesa pela audiência da tela, desconta o desgaste por repetição e exibe o maior. Os totens dividem o que aprendem (rede, zona e totem) e esquecem aos poucos a cada hora.</p></div>
+    <div><h3>Para ligar em totens reais</h3><p>Troque <code>World</code> pelos eventos do totem (contagem por perfil e cliques) e mantenha <code>Brain</code>. Só se conta gente, sem reconhecer rosto nem guardar imagem, em linha com a LGPD.</p></div>
+  </section>
+</div>
+
+<aside class="drawer" id="drawer" hidden role="dialog" aria-label="Menu de cálculos do algoritmo">
+  <header class="dhead">
+    <div><h2>Cálculos do algoritmo</h2><p>Cada número que o aprendizado de máquina usa, passo a passo, para o totem selecionado. A simulação pausa ao abrir; continue pelo botão.</p></div>
+    <button class="btn" id="dClose" type="button">Fechar</button>
+  </header>
+  <div class="dbar">
+    <select id="dSel" aria-label="Totem inspecionado"></select>
+    <button class="btn" id="dPause" type="button">Pausar</button>
+    <button class="btn" id="dStep" type="button">+1 spot</button>
+  </div>
+  <nav class="tabs" id="dTabs" role="tablist" aria-label="Seções de cálculo">
+    <button type="button" role="tab" data-tab="spot" aria-selected="true">Último spot</button>
+    <button type="button" role="tab" data-tab="post" aria-selected="false">Posterior</button>
+    <button type="button" role="tab" data-tab="zonas" aria-selected="false">Zonas</button>
+    <button type="button" role="tab" data-tab="log" aria-selected="false">Registro</button>
+    <button type="button" role="tab" data-tab="formulas" aria-selected="false">Fórmulas</button>
+    <button type="button" role="tab" data-tab="params" aria-selected="false">Parâmetros</button>
+  </nav>
+  <div class="dbody" id="dBody">
+    <div id="tab-spot">
+      <div class="nav">
+        <button class="btn" id="trPrev" type="button">◀ Anterior</button>
+        <button class="btn" id="trNext" type="button">Próximo ▶</button>
+        <button class="btn" id="trLive" type="button">Ao vivo</button>
+        <span id="trPos" class="hint">–</span>
+        <button class="btn" id="trCopy" type="button">Copiar JSON</button>
+      </div>
+      <div id="spotBody"></div>
+      <textarea id="copyArea" readonly hidden rows="6" aria-label="JSON do spot para copiar"></textarea>
+    </div>
+    <div id="tab-post" hidden>
+      <div class="nav"><label>Nível <select id="postLvl"><option value="tot">Totem (com priors)</option><option value="zona">Zona</option><option value="rede">Rede inteira</option></select></label>
+        <span class="hint">Média da taxa de interação, desvio e número de olhares que sustentam cada célula.</span></div>
+      <div class="tablewrap" id="postBody"></div>
+    </div>
+    <div id="tab-zonas" hidden><div class="tablewrap" id="zonasBody"></div></div>
+    <div id="tab-log" hidden>
+      <div class="nav">
+        <label class="check"><input type="checkbox" id="fDec" checked> Decisões do totem</label>
+        <label class="check"><input type="checkbox" id="fTroca" checked> Trocas da rede</label>
+        <label class="check"><input type="checkbox" id="fEsq" checked> Esquecimento</label>
+        <label class="check"><input type="checkbox" id="fMarco" checked> Marcos</label>
+        <button class="btn" id="logCopy" type="button">Copiar</button>
+      </div>
+      <div class="logbox" id="logBox" tabindex="0"></div>
+    </div>
+    <div id="tab-formulas" hidden></div>
+    <div id="tab-params" hidden>
+      <p class="hint">Mexa nos parâmetros e veja o efeito no ganho e nos cálculos em tempo real. A câmera pertence ao mundo simulado, os demais pertencem ao algoritmo.</p>
+      <div id="paramList" class="params"></div>
+      <button class="btn" id="paramReset" type="button">Restaurar padrões</button>
+    </div>
+  </div>
+</aside>
+
+<script>
+(()=>{
+'use strict';
+const W=970,H=640,NC=7,NS=8;
+const AGES=['18–24','25–34','35–49','50+'],GEN=['Homem','Mulher'];
+const segLabel=s=>GEN[s>>2]+' '+AGES[s&3];
+const DIAS=['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
+const pk=(h,mu,sg)=>{let d=Math.abs(h-mu);d=Math.min(d,24-d);return Math.exp(-.5*(d/sg)*(d/sg));};
+const clamp=(x,a,b)=>x<a?a:x>b?b:x;
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+const norm=r=>{let u=0;while(u===0)u=r();return Math.sqrt(-2*Math.log(u))*Math.cos(6.283185307*r());};
+function gammaS(k,r){if(k<1)return gammaS(k+1,r)*Math.pow(r(),1/k);const d=k-1/3,c=1/Math.sqrt(9*d);for(;;){let x,v;do{x=norm(r);v=1+c*x;}while(v<=0);v=v*v*v;const u=r();if(u<1-.0331*x*x*x*x||Math.log(u)<.5*x*x+d*(1-v+Math.log(v)))return d*v;}}
+function betaS(a,b,r){if(a+b>60){const m=a/(a+b),sd=Math.sqrt(m*(1-m)/(a+b+1));return clamp(m+sd*norm(r),1e-4,.5);}const x=gammaS(a,r),y=gammaS(b,r);return x/(x+y);}
+function poisson(l,r){const L=Math.exp(-l);let k=0,p=1;do{k++;p*=r();}while(p>L&&k<60);return k-1;}
+
+/* ---------- Mundo (a verdade que o algoritmo nunca vê) ---------- */
+const CRE=[
+ {nome:'Pulse Academia',tag:'Primeira semana grátis',cor:'#ef6a3a',base:.030,age:[1.4,1.2,.7,.35],gen:[1.1,.95],zone:{uni:1.2,parque:1.3,centro:1,noite:.8},tm:h=>1+.25*pk(h,7.5,1.5)+.3*pk(h,18.5,1.8)},
+ {nome:'Brasa Café',tag:'Café coado e pão na chapa',cor:'#1fb5a5',base:.026,age:[1,1.2,1.1,.8],gen:[1,1],zone:{centro:1.2,estacao:1.3,shopping:1,noite:.6},tm:h=>1+.5*pk(h,8,1.6)+.15*pk(h,15.5,1.5)},
+ {nome:'Nuvem Cartão',tag:'Anuidade zero para sempre',cor:'#8b7cf6',base:.024,age:[.5,1.2,1.4,.9],gen:[1.05,.95],zone:{centro:1.4,estacao:1.1,uni:.7,noite:.6},tm:h=>1+.2*pk(h,12.5,2)},
+ {nome:'Cine Aurora',tag:'Estreia hoje, sessão das 20h',cor:'#eab308',base:.032,age:[1.5,1.3,.7,.4],gen:[.95,1.05],zone:{shopping:1.3,noite:1.3,uni:1.1,centro:.8},tm:h=>1+.4*pk(h,20,2.5)},
+ {nome:'Voa Idiomas',tag:'Aula experimental',cor:'#3b9ae1',base:.027,age:[1.5,1.2,.6,.3],gen:[.9,1.1],zone:{uni:1.4,centro:1,resid:.9},tm:h=>1+.2*pk(h,18.5,2)},
+ {nome:'Vento Running',tag:'Tênis de corrida -30%',cor:'#e0508c',base:.030,age:[.9,1.3,1.1,.5],gen:[1.2,.85],zone:{parque:1.5,shopping:1.1,estacao:.9,noite:.6},tm:h=>1+.3*pk(h,7,1.3)+.2*pk(h,18,1.5)},
+ {nome:'Clínica Bem Viver',tag:'Check-up completo',cor:'#6bbf59',base:.028,age:[.2,.5,1.2,1.8],gen:[.85,1.15],zone:{resid:1.4,centro:1,shopping:1.1,uni:.4,noite:.3},tm:h=>1+.25*pk(h,10,2.2)},
+];
+const ZONES=[
+ {id:'uni',nome:'Campus',cx:150,cy:140,ageW:[.55,.27,.10,.08],gM:.47,fat:[.4,.6],sc:[.7,1.1],tint:'#3b9ae1',
+  prof:(h,we)=>we?.12*pk(h,14,4):.85*pk(h,8,1.3)+.65*pk(h,12.7,1.3)+.9*pk(h,18.3,1.6)+.18*pk(h,15,5),
+  names:['Portaria Principal','Biblioteca Central','Bandejão','Bloco de Engenharia','Ponto de Ônibus do Campus','Praça do Diretório']},
+ {id:'centro',nome:'Centro',cx:470,cy:200,ageW:[.12,.36,.34,.18],gM:.54,fat:[.35,.55],sc:[.75,1.15],tint:'#8b7cf6',
+  prof:(h,we)=>we?.25*pk(h,14,4):.8*pk(h,8.5,1.1)+pk(h,12.5,1.2)+.85*pk(h,18,1.4)+.2*pk(h,15,5),
+  names:['Av. Brasil · Bolsa','Largo da Matriz','Rua do Comércio','Edifício Atlântico','Galeria Central','Praça do Relógio']},
+ {id:'shopping',nome:'Comércio',cx:800,cy:150,ageW:[.2,.28,.30,.22],gM:.38,fat:[.15,.3],sc:[.7,1.15],tint:'#eab308',
+  prof:(h,we)=>{const b=.9*pk(h,16,3.8)+.45*pk(h,12,2);return we?Math.min(1,b*1.3):b*.75;},
+  names:['Shopping Vila Nova · Entrada','Praça de Alimentação','Rua das Lojas','Calçadão Leste','Boulevard Sul','Outlet Porto']},
+ {id:'resid',nome:'Bairro',cx:310,cy:340,ageW:[.10,.22,.32,.36],gM:.45,fat:[.5,.7],sc:[.55,.9],tint:'#6bbf59',
+  prof:(h,we)=>we?.6*pk(h,11,3)+.4*pk(h,18,2.5):.8*pk(h,7.5,1.2)+.8*pk(h,19,1.6)+.2*pk(h,13,3),
+  names:['Mercado do Bairro','Praça das Flores','Escola Municipal','Posto de Saúde','Padaria da Esquina','Ponto da Linha 12']},
+ {id:'estacao',nome:'Estação',cx:560,cy:440,ageW:[.2,.3,.3,.2],gM:.5,fat:[.55,.8],sc:[.85,1.2],tint:'#ef6a3a',
+  prof:(h,we)=>we?.5*(.7*pk(h,9,2)+.7*pk(h,18,2)+.3*pk(h,14,4)):pk(h,7.6,1.1)+pk(h,18,1.3)+.35*pk(h,13,3),
+  names:['Plataforma Norte','Plataforma Sul','Saguão Principal','Terminal de Ônibus','Bicicletário','Passarela Leste']},
+ {id:'parque',nome:'Orla e Parque',cx:150,cy:470,ageW:[.15,.35,.32,.18],gM:.5,fat:[.2,.4],sc:[.6,1],tint:'#1fb5a5',
+  prof:(h,we)=>we?.9*pk(h,9,1.8)+pk(h,16.5,2.2):.6*pk(h,6.8,1)+.7*pk(h,17.8,1.5)+.15*pk(h,12.5,2),
+  names:['Entrada do Parque','Pista de Corrida','Lago','Quiosque da Orla','Ciclovia','Mirante do Rio']},
+ {id:'noite',nome:'Noite',cx:810,cy:440,ageW:[.4,.4,.14,.06],gM:.52,fat:[.15,.3],sc:[.7,1.1],tint:'#e0508c',
+  prof:(h,we)=>Math.min(1,(.95*pk(h,22.5,2.3)+.3*pk(h,13,2)*(we?.6:1))*(we?1.25:1)),
+  names:['Rua do Bar','Praça da Música','Casa de Shows','Esquina Neon','Beco das Pizzas','Cine Teatro']},
+];
+const ZI={};ZONES.forEach((z,i)=>ZI[z.id]=i);
+const HAGE=h=>h>=22||h<6?[1.6,1.5,.7,.25]:h<10?[.9,1,1.2,.9]:h<17?[.9,.9,1,1.4]:[1.1,1.1,1,.7];
+const XS=[60,200,350,500,650,790,910],YS=[50,180,310,440,570];
+const DEF={acc:.86,kz:40,kt:60,rest:.4,forget:.985,look:16,cpm:18,val:8};
+const PRM=Object.assign({},DEF);   // acc: câmera · kz,kt: força dos priors · rest: desgaste assumido · forget: esquecimento/h · look: horizonte do oráculo · cpm,val: economia
+const CON=new Array(NC).fill(true);   // campanhas ativas
+const EV={chuva:false,show:false,greve:false,feriado:false};
+const EVN={chuva:'Chuva forte',show:'Show na Praça da Música',greve:'Greve na estação',feriado:'Feriado'};
+function evMul(z){let m=1;
+  if(EV.chuva)m*={parque:.25,uni:.7,shopping:1.15,estacao:1.1,centro:.8,resid:.85,noite:.6}[z];
+  if(EV.show)m*={noite:2.4,centro:1.1}[z]||1;
+  if(EV.greve)m*={estacao:.3,centro:.85,resid:.9}[z]||1;
+  return m;}
+const fatT=(r,e)=>.35+.65*Math.exp(-r*e/600);
+
+function nearestZone(x,y){let b=0,bd=1e9;for(let i=0;i<ZONES.length;i++){const d=Math.hypot(x-ZONES[i].cx,y-ZONES[i].cy);if(d<bd){bd=d;b=i;}}return b;}
+
+let S,B,rW,rB;           // estado do mundo, cérebro, geradores aleatórios
+let viewStep=null,sel=0,playing=true,speed=10,mode='cri',ffTarget=0,showTruth=false;
+const scoreA=new Float64Array(NC),ne=new Float64Array(NS),nt=new Float64Array(NS);
+const vT=new Int8Array(64),vU=new Int8Array(64),vR=new Float64Array(64);
+
+function init(seed){
+  rW=mulberry32(seed);rB=mulberry32(seed^0x9e3779b9);
+  const totems=[];
+  ZONES.forEach((z,zi)=>{
+    let tries=0,count=0;
+    while(count<6&&tries<8000){
+      tries++;
+      const horiz=rW()<.5;let x,y;
+      if(horiz){const j=(rW()*YS.length)|0,i=(rW()*(XS.length-1))|0;y=YS[j];x=XS[i]+(XS[i+1]-XS[i])*(.22+rW()*.56);}
+      else{const i=(rW()*XS.length)|0,j=(rW()*(YS.length-1))|0;x=XS[i];y=YS[j]+(YS[j+1]-YS[j])*(.22+rW()*.56);}
+      if(nearestZone(x,y)!==zi)continue;
+      if(Math.hypot(x-z.cx,y-z.cy)>(tries<3000?150:240))continue;
+      if(totems.some(t=>Math.hypot(t.x-x,t.y-y)<(tries<5000?62:48)))continue;
+      const k=totems.length;
+      const ageW=z.ageW.map(v=>v*Math.exp(norm(rW)*.25));
+      const gM=clamp(z.gM+norm(rW)*.05,.2,.8);
+      const wt=[],cw=[];
+      for(let h=0;h<24;h++){
+        const hm=HAGE(h),w=new Float64Array(NS);let sum=0;
+        for(let s=0;s<NS;s++){w[s]=ageW[s&3]*hm[s&3]*((s>>2)===0?gM:1-gM);sum+=w[s];}
+        let acc=0;const c=new Float64Array(NS);
+        for(let s=0;s<NS;s++){w[s]/=sum;acc+=w[s];c[s]=acc;}
+        wt.push(w);cw.push(c);
+      }
+      const r=z.fat[0]+rW()*(z.fat[1]-z.fat[0]);
+      const P=new Float32Array(24*NS*NC);
+      for(let h=0;h<24;h++)for(let s=0;s<NS;s++)for(let c=0;c<NC;c++){
+        const cr=CRE[c];
+        P[(h*NS+s)*NC+c]=Math.min(.09,cr.base*cr.age[s&3]*cr.gen[s>>2]*(cr.zone[z.id]??1)*cr.tm(h));
+      }
+      const dots=[];
+      for(let d=0;d<16;d++)dots.push({p:(rW()-.5)*100,v:(6+rW()*8)*(rW()<.5?-1:1),o:(rW()-.5)*9,g:0,a:0});
+      totems.push({id:k,zi,x,y,axis:horiz?'h':'v',nome:z.names[count],r,scale:z.sc[0]+rW()*(z.sc[1]-z.sc[0]),wt,cw,P,dots,
+        E:[new Float64Array(NC),new Float64Array(NC),new Float64Array(NC)],
+        recent:new Float64Array(NS),hrSum:new Float64Array(24),hrCnt:new Float64Array(24),
+        cur:[0,0,0],lastN:0,ewma:0,views:0,eng:[0,0,0],shows:new Float64Array(NC),lastNe:new Float64Array(NS)});
+      count++;
+    }
+  });
+  const mk=n=>({a:new Float64Array(n),n:new Float64Array(n)});
+  B={T:totems.map(()=>mk(NS*NC)),Z:ZONES.map(()=>mk(NS*NC)),G:mk(NS*NC)};
+  S={t:6*3600,step:0,totems,tot:{v:0,e:[0,0,0]},bins:[],bin:{v:0,e:[0,0,0]},binT:6*3600,hour:6,log:[],pulses:[],lines:[],traces:[],cs:[0,1,2].map(()=>({v:new Float64Array(NC),e:new Float64Array(NC),s:new Float64Array(NC)}))};
+}
+
+/* ---------- Cérebro: Thompson Sampling contextual hierárquico ---------- */
+function effMean(i,s,c){
+  const k=s*NC+c,G=B.G,Zc=B.Z[S.totems[i].zi],T=B.T[i];
+  const gm=(G.a[k]+.2)/(G.n[k]+10),zm=(Zc.a[k]+PRM.kz*gm)/(Zc.n[k]+PRM.kz);
+  return (T.a[k]+PRM.kt*zm)/(T.n[k]+PRM.kt);
+}
+function brainChoose(i,aud,tot,out,rec){
+  const T=B.T[i],Zc=B.Z[S.totems[i].zi],G=B.G,E=S.totems[i].E[0];
+  scoreA.fill(0);
+  for(let s=0;s<NS;s++){
+    const n=aud[s];if(!(n>0))continue;
+    if(rec)rec.cells[s]=[];
+    for(let c=0;c<NC;c++){
+      if(!CON[c]){if(rec)rec.cells[s][c]={gm:0,zm:0,a:0,b:0,th:0,gn:0,zn:0,tn:0};continue;}
+      const k=s*NC+c;
+      const gm=(G.a[k]+.2)/(G.n[k]+10),zm=(Zc.a[k]+PRM.kz*gm)/(Zc.n[k]+PRM.kz);
+      const a=T.a[k]+PRM.kt*zm,b=T.n[k]-T.a[k]+PRM.kt*(1-zm),th=betaS(a,b,rB);
+      scoreA[c]+=n*th;
+      if(rec)rec.cells[s][c]={gm,zm,a,b,th,gn:G.n[k],zn:Zc.n[k],tn:T.n[k]};
+    }
+  }
+  let b=-1,bv=-1,s2=-1,sv=-1;
+  if(rec){rec.raw=[];rec.E=[];rec.fe=[];rec.v=[];}
+  for(let c=0;c<NC;c++){
+    const fe=.35+.65*Math.exp(-PRM.rest*E[c]/600),v=CON[c]?scoreA[c]/tot*fe:0;
+    if(rec){rec.raw.push(scoreA[c]);rec.E.push(E[c]);rec.fe.push(fe);rec.v.push(v);}
+    if(!CON[c])continue;
+    if(v>bv){s2=b;sv=bv;b=c;bv=v;}else if(v>sv){s2=c;sv=v;}
+  }
+  if(s2<0)s2=b;
+  out.run=s2;out.exp=bv;return b;
+}
+function brainLearn(i,us,c,hit){
+  const k=us*NC+c,T=B.T[i],Zc=B.Z[S.totems[i].zi],G=B.G;
+  T.n[k]++;Zc.n[k]++;G.n[k]++;
+  if(hit){T.a[k]++;Zc.a[k]++;G.a[k]++;}
+}
+function brainForget(){
+  const f=PRM.forget;
+  const dec=m=>{for(let k=0;k<m.a.length;k++){m.a[k]*=f;m.n[k]*=f;}};
+  B.T.forEach(dec);B.Z.forEach(dec);dec(B.G);
+}
+
+/* ---------- Passo da simulação: 30 s ---------- */
+const dbg={run:0,exp:0};
+const DE=Math.exp(-Math.LN2*.5/150),DS=Math.exp(-Math.LN2*.5/180);
+const f2=(x,d=2)=>Number(x).toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d});
+function stampOf(t){const day=Math.floor(t/86400),s=t%86400;return DIAS[day%7]+' '+String(Math.floor(s/3600)).padStart(2,'0')+':'+String(Math.floor(s/60%60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');}
+function pushLine(k,x){S.lines.push({k,t:stampOf(S.t),x});if(S.lines.length>500)S.lines.shift();}
+function step(){
+  const t=S.t,hour=(t/3600)%24,hI=hour|0,day=Math.floor(t/86400),we=(day%7)>=5||EV.feriado;
+  const hAbs=Math.floor(t/3600);
+  if(hAbs!==S.hAbs){
+    if(S.hAbs!==undefined){brainForget();pushLine('esq',`Esquecimento: todas as contagens (a, n) multiplicadas por ${f2(PRM.forget,3)} em ${(S.totems.length+ZONES.length+1)*NS*NC} células`);}
+    S.hAbs=hAbs;
+    if(hI===0)pushLine('marco',`Começa ${DIAS[day%7]} (dia ${day+1})${we?' · fim de semana':''}`);
+  }
+  const zpR=ZONES.map(z=>z.prof(hour,we)),zp=ZONES.map((z,k)=>(zpR[k]+.03)*evMul(z.id));
+  const act=[];CON.forEach((x,c)=>{if(x)act.push(c);});
+  const dh=Math.floor(t/60%60),stamp=String(hI).padStart(2,'0')+':'+String(dh).padStart(2,'0');
+  for(const tt of S.totems){
+    const i=tt.id,lam=tt.scale*13*zp[tt.zi],cw=tt.cw[hI],w=tt.wt[hI];
+    const TR=(i===sel)?{id:S.step,t:stamp,stamp:stampOf(t),we,tot:tt.nome,zona:ZONES[tt.zi].nome,prof:zpR[tt.zi],ev:evMul(ZONES[tt.zi].id),scale:tt.scale,lam,r:tt.r,cells:{},rows:[]}:null;
+    for(let p=0;p<3;p++){const E=tt.E[p];for(let c=0;c<NC;c++)E[c]*=DE;}
+    for(let s=0;s<NS;s++)tt.recent[s]*=DS;
+    const N=Math.min(40,poisson(lam,rW));
+    ne.fill(0);nt.fill(0);let err=0;
+    for(let v=0;v<N;v++){
+      const r=rW();let ts=0;while(ts<NS-1&&r>cw[ts])ts++;
+      let us=ts;const q=rW(),a=ts&3,g=ts>>2;
+      if(q>PRM.acc){
+        if(q<PRM.acc+(1-PRM.acc)*.75){let na=a;if(a===0)na=1;else if(a===3)na=2;else na=a+(rW()<.5?-1:1);us=g*4+na;}
+        else us=(1-g)*4+a;
+      }
+      if(us!==ts)err++;
+      vT[v]=ts;vU[v]=us;vR[v]=rW();nt[ts]++;ne[us]++;
+    }
+    if(TR){TR.N=N;TR.nt=Array.from(nt);TR.ne=Array.from(ne);TR.err=err;TR.w=Array.from(w);}
+    const aud=N>0?ne:w,tot=N>0?N:1;
+    const cA=brainChoose(i,aud,tot,dbg,TR),runner=dbg.run,expA=dbg.exp;
+    const cR=act[(S.step+i*3)%act.length];
+    let cO=0,ov=-1;const oV=[],oF=[];
+    for(let c=0;c<NC;c++){
+      if(!CON[c]){oV.push(0);oF.push(1);continue;}
+      let v=0;const f=fatT(tt.r,tt.E[2][c]+lam*PRM.look);
+      for(let s=0;s<NS;s++){const n=N>0?nt[s]:w[s];if(n>0)v+=n*tt.P[(hI*NS+s)*NC+c];}
+      v*=f;oV.push(v/tot);oF.push(f);if(v>ov){ov=v;cO=c;}
+    }
+    const ch=[cA,cR,cO],fa=[0,0,0],hp=[0,0,0];
+    for(let p=0;p<3;p++)fa[p]=fatT(tt.r,tt.E[p][ch[p]]);
+    const upd={};
+    for(let v=0;v<N;v++){
+      const base=(hI*NS+vT[v])*NC,u=vR[v];
+      for(let p=0;p<3;p++){
+        const hit=u<tt.P[base+ch[p]]*fa[p];
+        if(hit){tt.eng[p]++;S.tot.e[p]++;S.bin.e[p]++;hp[p]++;}
+        if(p===0){
+          brainLearn(i,vU[v],cA,hit);
+          if(TR){
+            const u2=upd[vU[v]]||(upd[vU[v]]={n:0,hit:0});u2.n++;if(hit)u2.hit++;
+            if(TR.rows.length<16)TR.rows.push({ts:vT[v],us:vU[v],u,p:tt.P[base+ch[0]]*fa[0],hit});
+          }
+        }
+      }
+    }
+    for(let p=0;p<3;p++){tt.E[p][ch[p]]+=N;const q=S.cs[p];q.v[ch[p]]+=N;q.e[ch[p]]+=hp[p];q.s[ch[p]]++;}
+    tt.views+=N;S.tot.v+=N;S.bin.v+=N;
+    for(let v=0;v<N;v++)tt.recent[vU[v]]++;
+    tt.hrSum[hI]+=N;tt.hrCnt[hI]++;
+    tt.ewma=tt.ewma*.9+N*.1;tt.lastN=N;tt.lastNe.set(ne);
+    tt.shows[cA]++;
+    if(cA!==tt.cur[0]&&N>0){
+      let dom=-1,dv=0;for(let s=0;s<NS;s++)if(ne[s]>dv){dv=ne[s];dom=s;}
+      S.log.push({t:stamp,tt:tt.nome,c:cA,runner,n:N,dom,pct:Math.round(100*dv/N),exp:expA});
+      if(S.log.length>60)S.log.shift();
+      pushLine('troca',`${tt.nome}: ${CRE[tt.cur[0]].nome} → ${CRE[cA].nome} (${N} pessoas${dom>=0?`, ${Math.round(100*dv/N)}% ${segLabel(dom)}`:''}, esperado ${pc(expA)})`);
+    }
+    if(TR){
+      TR.choice=cA;TR.runner=runner;TR.exp=expA;TR.rot=cR;TR.oV=oV;TR.oF=oF;TR.orc=cO;
+      TR.out=[0,1,2].map(p=>({c:ch[p],f:fa[p],hits:hp[p]}));TR.upd=upd;TR.post={};
+      for(const s in upd){const m=[];for(let c=0;c<NC;c++)m.push(effMean(i,+s,c));TR.post[s]=m;}
+      S.traces.push(TR);if(S.traces.length>150)S.traces.shift();
+      pushLine('dec',`${tt.nome} · λ=${f2(lam)} N=${N} (câmera errou ${err}) · escolhe ${CRE[cA].nome} (esperado ${pc(expA)}; 2ª ${CRE[runner].nome}) · rotação=${CRE[cR].nome} · oráculo=${CRE[cO].nome} · interações A/R/O = ${hp[0]}/${hp[1]}/${hp[2]}`);
+    }
+    tt.cur[0]=cA;tt.cur[1]=cR;tt.cur[2]=cO;
+    if(hp[0]>0&&S.pulses.length<80)S.pulses.push({i,t0:performance.now()});
+  }
+  S.t+=30;S.step++;
+  if(S.t-S.binT>=900){S.bins.push(S.bin);S.bin={v:0,e:[0,0,0]};S.binT+=900;}
+}
+
+/* ---------- Mapa ---------- */
+const cvs=document.getElementById('map'),ctx=cvs.getContext('2d');
+const stat=document.createElement('canvas');
+let scale=1,dpr=1,hover=-1;
+const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
+let roadSeed;
+function buildStatic(){
+  const rect=cvs.parentElement.getBoundingClientRect();
+  const cw=Math.max(280,Math.floor(rect.width-2));
+  dpr=Math.min(2,window.devicePixelRatio||1);scale=cw/W;
+  cvs.width=Math.round(cw*dpr);cvs.height=Math.round(H*scale*dpr);cvs.style.height=(H*scale)+'px';
+  stat.width=cvs.width;stat.height=cvs.height;
+  const g=stat.getContext('2d');g.setTransform(dpr*scale,0,0,dpr*scale,0,0);
+  const r=mulberry32(7);
+  g.fillStyle=css('--map-bg');g.fillRect(0,0,W,H);
+  const RW=13;
+  for(let j=0;j<YS.length-1;j++)for(let i=0;i<XS.length-1;i++){
+    const x0=XS[i]+RW/2,y0=YS[j]+RW/2,x1=XS[i+1]-RW/2,y1=YS[j+1]-RW/2;
+    const zi=nearestZone((x0+x1)/2,(y0+y1)/2),z=ZONES[zi];
+    const park=z.id==='parque'&&((i+j)%2===0)||(z.id==='uni'&&i===1&&j===1);
+    g.fillStyle=park?css('--map-park'):css('--map-block');g.fillRect(x0,y0,x1-x0,y1-y0);
+    if(!park){
+      g.fillStyle=css('--map-block2');
+      const bw=(x1-x0-18)/2,bh=(y1-y0-18)/2;
+      for(let a=0;a<2;a++)for(let b=0;b<2;b++){
+        if(r()<.18)continue;
+        g.globalAlpha=.55+r()*.45;g.fillRect(x0+6+a*(bw+6),y0+6+b*(bh+6),bw,bh);
+      }
+      g.globalAlpha=.1;g.fillStyle=z.tint;g.fillRect(x0,y0,x1-x0,y1-y0);g.globalAlpha=1;
+    }
+  }
+  g.strokeStyle=css('--map-river');g.lineWidth=36;g.lineCap='round';
+  g.beginPath();g.moveTo(-30,545);g.bezierCurveTo(200,640,360,500,560,600);g.bezierCurveTo(740,680,880,560,1010,620);g.stroke();
+  g.strokeStyle=css('--map-road');g.lineCap='butt';
+  XS.forEach((x,i)=>{g.lineWidth=(i===3)?20:RW;g.beginPath();g.moveTo(x,-5);g.lineTo(x,H+5);g.stroke();});
+  YS.forEach((y,j)=>{g.lineWidth=(j===2)?20:RW;g.beginPath();g.moveTo(-5,y);g.lineTo(W+5,y);g.stroke();});
+  if(cw>520){
+    g.fillStyle=css('--map-label');g.textAlign='center';g.textBaseline='middle';
+    g.font=`500 ${10.5/scale}px "DM Mono",monospace`;
+    ZONES.forEach(z=>{
+      const lab=z.nome.toUpperCase().split('').join(String.fromCharCode(8202));
+      const ox=z.id==='parque'?-10:0,oy=z.id==='parque'?52:0;
+      g.fillText(lab,z.cx+ox,z.cy+oy+(z.id==='resid'?28:z.id==='estacao'?-70:-82+ (z.id==='shopping'||z.id==='noite'||z.id==='uni'?64:0)));
+    });
+    g.save();g.translate(430,610);g.rotate(.06);g.globalAlpha=.9;g.fillText('R I O   A L V O R A D A',0,0);g.restore();
+  }
+}
+function drawMap(now,dt){
+  ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(stat,0,0);
+  ctx.setTransform(dpr*scale,0,0,dpr*scale,0,0);
+  const px=n=>n/scale,hI=Math.floor((S.t/3600)%24);
+  if(mode==='flx'){
+    for(const tt of S.totems){
+      const rad=18+tt.ewma*7,gr=ctx.createRadialGradient(tt.x,tt.y,0,tt.x,tt.y,rad);
+      gr.addColorStop(0,css('--accent'));gr.addColorStop(1,'transparent');
+      ctx.globalAlpha=clamp(.2+tt.ewma/10,.2,.7);ctx.fillStyle=gr;ctx.beginPath();ctx.arc(tt.x,tt.y,rad,0,6.3);ctx.fill();
+    }
+    ctx.globalAlpha=1;
+  }
+  const cM=css('--dot-m'),cF=css('--dot-f');
+  for(const tt of S.totems){
+    const n=Math.min(16,Math.round(tt.ewma*1.5)),w=tt.wt[hI];
+    for(let d=0;d<n;d++){
+      const o=tt.dots[d];
+      if(playing&&!reduceMotion)o.p+=o.v*dt;
+      if(o.p>52||o.p<-52){o.v=-o.v;o.p=clamp(o.p,-52,52);
+        let r=rW(),s=0,acc=0;for(;s<NS-1;s++){acc+=w[s];if(r<acc)break;}o.g=s>>2;o.a=s&3;}
+      const x=tt.axis==='h'?tt.x+o.p:tt.x+o.o,y=tt.axis==='h'?tt.y+o.o:tt.y+o.p;
+      ctx.fillStyle=o.g===0?cM:cF;ctx.globalAlpha=.85;ctx.beginPath();ctx.arc(x,y,px(1.3+o.a*.35)*Math.max(1,scale*1.6),0,6.3);ctx.fill();
+    }
+  }
+  ctx.globalAlpha=1;
+  S.pulses=S.pulses.filter(p=>now-p.t0<900);
+  for(const p of S.pulses){const tt=S.totems[p.i],k=(now-p.t0)/900;
+    ctx.strokeStyle=CRE[tt.cur[0]].cor;ctx.globalAlpha=1-k;ctx.lineWidth=px(2);
+    ctx.beginPath();ctx.arc(tt.x,tt.y,px(8)+px(26)*k,0,6.3);ctx.stroke();}
+  ctx.globalAlpha=1;
+  const bg=css('--map-bg'),ink=css('--ink');
+  for(const tt of S.totems){
+    const on=tt.id===sel,hv=tt.id===hover,r=px(on?9:hv?8:6.4);
+    ctx.beginPath();ctx.arc(tt.x,tt.y,r+px(2.2),0,6.3);ctx.fillStyle=on?ink:bg;ctx.fill();
+    ctx.beginPath();ctx.arc(tt.x,tt.y,r,0,6.3);
+    let fc;
+    if(mode==='cri')fc=CRE[tt.cur[0]].cor;else if(mode==='flx')fc=css('--accent');
+    else{const g=tt.eng[1]>25?tt.eng[0]/tt.eng[1]-1:null;fc=g==null?css('--muted'):g>=0?css('--good'):css('--bad');ctx.globalAlpha=g==null?.6:.45+.55*Math.min(1,Math.abs(g)/.5);}
+    ctx.fillStyle=fc;ctx.fill();ctx.globalAlpha=1;
+  }
+}
+function pickTotem(ev){
+  const rect=cvs.getBoundingClientRect(),x=(ev.clientX-rect.left)/scale,y=(ev.clientY-rect.top)/scale;
+  let b=-1,bd=(16/scale)**2;
+  for(const tt of S.totems){const d=(tt.x-x)**2+(tt.y-y)**2;if(d<bd){bd=d;b=tt.id;}}
+  return b;
+}
+const tip=document.getElementById('tip');
+cvs.addEventListener('pointermove',ev=>{
+  const i=pickTotem(ev);hover=i;
+  if(i<0){tip.style.display='none';return;}
+  const tt=S.totems[i],rect=cvs.parentElement.getBoundingClientRect();
+  tip.innerHTML=`<b>${tt.nome}</b>${CRE[tt.cur[0]].nome} · ${tt.lastN} ${tt.lastN===1?'pessoa':'pessoas'}`;
+  tip.style.display='block';
+  tip.style.left=Math.min(ev.clientX-rect.left+12,rect.width-230)+'px';tip.style.top=(ev.clientY-rect.top+12)+'px';
+});
+cvs.addEventListener('pointerleave',()=>{hover=-1;tip.style.display='none';});
+cvs.addEventListener('click',ev=>{const i=pickTotem(ev);if(i>=0)select(i);});
+
+/* ---------- Interface ---------- */
+const $=id=>document.getElementById(id);
+const fmt=n=>Math.round(n).toLocaleString('pt-BR');
+const pc=(x,d=1)=>(x*100).toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d})+'%';
+const per1k=(e,v)=>v>0?(1000*e/v).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1}):'–';
+function qrURL(seed){
+  const r=mulberry32(seed*97+3);let s='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 9 9" shape-rendering="crispEdges"><rect width="9" height="9" fill="#fff"/>';
+  const fin=(x,y)=>`<rect x="${x}" y="${y}" width="3" height="3" fill="#111"/><rect x="${x+.5}" y="${y+.5}" width="2" height="2" fill="#fff"/><rect x="${x+1}" y="${y+1}" width="1" height="1" fill="#111"/>`;
+  s+=fin(.5,.5)+fin(5.5,.5)+fin(.5,5.5);
+  for(let y=0;y<9;y++)for(let x=0;x<9;x++){const inF=(x<4&&y<4)||(x>4&&y<4)||(x<4&&y>4);if(!inF&&r()<.5)s+=`<rect x="${x}" y="${y}" width="1" height="1" fill="#111"/>`;}
+  return 'url("data:image/svg+xml,'+encodeURIComponent(s+'</svg>')+'")';
+}
+function buildSelect(){
+  const el=$('selTotem');el.innerHTML='';
+  ZONES.forEach((z,zi)=>{const og=document.createElement('optgroup');og.label=z.nome;
+    S.totems.filter(t=>t.zi===zi).forEach(t=>{const o=document.createElement('option');o.value=t.id;o.textContent=t.nome;og.appendChild(o);});el.appendChild(og);});
+  el.value=sel;$('dSel').innerHTML=el.innerHTML;$('dSel').value=sel;
+}
+function select(i){sel=i;viewStep=null;S.traces.length=0;$('selTotem').value=i;$('dSel').value=i;renderPanel();}
+$('selTotem').addEventListener('change',e=>select(+e.target.value));
+
+function renderPanel(){
+  const tt=S.totems[sel],z=ZONES[tt.zi],c=tt.cur[0],cr=CRE[c];
+  $('pName').textContent=tt.nome;
+  $('pMeta').textContent=`T-${String(tt.id+1).padStart(2,'0')} · ${z.nome} · ${fmt(tt.views)} olhares`;
+  const scr=$('scr');scr.style.setProperty('--c1',cr.cor);scr.style.setProperty('--c2','#101820');
+  $('scrN').textContent=cr.nome;$('scrT').textContent=cr.tag;$('scrQ').style.backgroundImage=qrURL(c+1);
+  $('pAud').textContent=tt.lastN===0?'ninguém olhando':`${tt.lastN} ${tt.lastN===1?'pessoa':'pessoas'}`;
+  const e=tt.E[0][c],f=.35+.65*Math.exp(-PRM.rest*e/600),des=(1-f)/.65;
+  $('pFat').style.width=(des*100)+'%';
+  $('pFatT').textContent=`Desgaste estimado do criativo atual: ${Math.round(des*100)}% (exposição recente: ${fmt(e)} olhares)`;
+  let tot=0;for(let s=0;s<NS;s++)tot+=tt.recent[s];
+  $('pDemo').innerHTML=Array.from({length:NS},(_,s)=>{const p=tot>0?tt.recent[s]/tot:0;
+    return `<span class="l">${segLabel(s)}</span><span class="b"><i style="width:${Math.min(100,p*250)}%"></i></span><span class="v">${Math.round(p*100)}%</span>`;}).join('');
+  const hv=[];let mx=.01;for(let h=0;h<24;h++){const v=tt.hrCnt[h]>0?tt.hrSum[h]/tt.hrCnt[h]:0;hv.push(v);if(v>mx)mx=v;}
+  const hn=Math.floor((S.t/3600)%24);
+  $('pHours').innerHTML=hv.map((v,h)=>`<i class="${h===hn?'now':''}" style="height:${Math.max(4,v/mx*100)}%" title="${h}h · ${v.toLocaleString('pt-BR',{maximumFractionDigits:1})}"></i>`).join('');
+  const order=Array.from({length:NS},(_,s)=>s).sort((a,b)=>tt.recent[b]-tt.recent[a]).slice(0,3);
+  $('pLearn').innerHTML=order.map(s=>{let bc=0,bm=-1;for(let k=0;k<NC;k++){const m=effMean(tt.id,s,k);if(m>bm){bm=m;bc=k;}}
+    return `<div><i style="background:${CRE[bc].cor}"></i><span>${segLabel(s)} → ${CRE[bc].nome}</span><b>${pc(bm)}</b></div>`;}).join('');
+  $('pA').textContent=per1k(tt.eng[0],tt.views);$('pR').textContent=per1k(tt.eng[1],tt.views);
+}
+function renderKPIs(){
+  const T=S.tot,day=Math.floor(S.t/86400);
+  $('clkDay').textContent=DIAS[day%7]+' · dia '+(day+1);
+  $('clkTime').textContent=String(Math.floor((S.t/3600)%24)).padStart(2,'0')+':'+String(Math.floor(S.t/60%60)).padStart(2,'0');
+  $('kViews').textContent=fmt(T.v);
+  $('kA').textContent=fmt(T.e[0]);$('kAs').textContent=per1k(T.e[0],T.v)+' por 1.000 olhares';
+  $('kR').textContent=fmt(T.e[1]);$('kRs').textContent=per1k(T.e[1],T.v)+' por 1.000 olhares';
+  const g=T.e[1]>0?T.e[0]/T.e[1]-1:0;
+  $('kG').textContent=(g>=0?'+':'')+(g*100).toLocaleString('pt-BR',{maximumFractionDigits:0})+'%';
+  const eff=effSeries(0),n=eff.length;
+  $('kE').textContent=n?pc(eff[n-1],0):'–';
+}
+function effSeries(p){
+  const b=S.bins,out=[],WIN=12;
+  for(let k=WIN-1;k<b.length;k++){let a=0,o=0;for(let j=k-WIN+1;j<=k;j++){a+=b[j].e[p];o+=b[j].e[2];}out.push(o>0?a/o:0);}
+  return out;
+}
+function renderHeat(){
+  const G=B.G,rows=[],truth=s=>c=>{const cr=CRE[c];let m=0;ZONES.forEach(z=>m+=cr.zone[z.id]??1);return cr.base*cr.age[s&3]*cr.gen[s>>2]*m/ZONES.length;};
+  let mx=.001;const val=[];
+  for(let s=0;s<NS;s++){val.push([]);for(let c=0;c<NC;c++){const k=s*NC+c,v=(G.a[k]+.2)/(G.n[k]+10);val[s].push(v);if(v>mx)mx=v;}}
+  let h='<table class="heat"><thead><tr><th></th>'+CRE.map(c=>`<th><i style="background:${c.cor}"></i>${c.nome.split(' ')[0]}</th>`).join('')+'</tr></thead><tbody>';
+  for(let s=0;s<NS;s++){
+    let bi=0;for(let c=1;c<NC;c++)if(val[s][c]>val[s][bi])bi=c;
+    const tr=truth(s);let ti=0;for(let c=1;c<NC;c++)if(tr(c)>tr(ti))ti=c;
+    h+=`<tr><th>${segLabel(s)}</th>`;
+    for(let c=0;c<NC;c++){
+      const v=val[s][c],a=Math.round(8+70*Math.pow(v/mx,1.6));
+      h+=`<td class="${c===bi?'best':''}" style="background:color-mix(in srgb,var(--accent) ${a}%,transparent)">${(v*100).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})}${showTruth?`<small>${c===ti?'★ ':''}${(tr(c)*100).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})}</small>`:''}</td>`;
+    }
+    h+='</tr>';
+  }
+  $('heatWrap').innerHTML=h+'</tbody></table>';
+}
+function renderLog(){
+  const l=S.log.slice(-9).reverse();
+  $('log').innerHTML=l.length?l.map(e=>`<li><i style="background:${CRE[e.c].cor}"></i><div><b>${e.tt}</b> passou a exibir <b>${CRE[e.c].nome}</b><small>${e.t} · ${e.n} pessoas${e.dom>=0?`, ${e.pct}% ${segLabel(e.dom)}`:''} · esperado ${pc(e.exp)} · 2ª opção ${CRE[e.runner].nome}</small></div></li>`).join(''):'<li><div>Aguardando as primeiras trocas…</div></li>';
+}
+const ch=$('chart'),cx=ch.getContext('2d');
+function renderChart(){
+  const r=ch.getBoundingClientRect(),w=Math.max(260,r.width),h=210,d=Math.min(2,window.devicePixelRatio||1);
+  if(ch.width!==Math.round(w*d)){ch.width=Math.round(w*d);ch.height=Math.round(h*d);}
+  cx.setTransform(d,0,0,d,0,0);cx.clearRect(0,0,w,h);
+  const L=36,Rr=104,T=18,Bt=26,pw=w-L-Rr,ph=h-T-Bt,ink=css('--ink'),mut=css('--muted'),line=css('--line'),acc=css('--accent');
+  const y=v=>T+ph*(1-(v-.3)/.75);
+  cx.font='11px "DM Mono",monospace';cx.textBaseline='middle';
+  [.4,.6,.8,1].forEach(v=>{cx.strokeStyle=line;cx.lineWidth=1;cx.beginPath();cx.moveTo(L,y(v));cx.lineTo(L+pw,y(v));cx.stroke();cx.fillStyle=mut;cx.textAlign='right';cx.fillText(Math.round(v*100)+'%',L-6,y(v));});
+  const A=effSeries(0),R=effSeries(1),n=Math.max(A.length,96),x=k=>L+pw*(k/(n-1));
+  cx.setLineDash([4,4]);cx.strokeStyle=ink;cx.globalAlpha=.55;cx.beginPath();cx.moveTo(L,y(1));cx.lineTo(L+pw,y(1));cx.stroke();cx.setLineDash([]);cx.globalAlpha=1;
+  cx.fillStyle=mut;cx.textAlign='left';cx.textAlign='right';cx.fillText('oráculo',L+pw,y(1)-8);cx.textAlign='left';
+  const plot=(s,col,wd)=>{if(s.length<2)return;cx.strokeStyle=col;cx.lineWidth=wd;cx.lineJoin='round';cx.beginPath();s.forEach((v,k)=>{k?cx.lineTo(x(k),y(clamp(v,.3,1.05))):cx.moveTo(x(k),y(clamp(v,.3,1.05)));});cx.stroke();
+    const k=s.length-1;cx.fillStyle=col;cx.beginPath();cx.arc(x(k),y(clamp(s[k],.3,1.05)),3.5,0,6.3);cx.fill();};
+  plot(R,mut,2);plot(A,acc,2.6);
+  cx.textAlign='left';
+  if(A.length){cx.fillStyle=acc;cx.fillText('algoritmo '+Math.round(A[A.length-1]*100)+'%',x(A.length-1)+8,y(clamp(A[A.length-1],.3,1)) - (R.length&&Math.abs(A[A.length-1]-R[R.length-1])<.06?7:0));}
+  if(R.length){cx.fillStyle=mut;cx.fillText('rotação '+Math.round(R[R.length-1]*100)+'%',x(R.length-1)+8,y(clamp(R[R.length-1],.3,1))+(A.length&&Math.abs(A[A.length-1]-R[R.length-1])<.06?7:0));}
+  if(!A.length){cx.fillStyle=mut;cx.textAlign='center';cx.fillText('reunindo as primeiras 3 horas de dados…',L+pw/2,T+ph/2);}
+  cx.fillStyle=mut;cx.textAlign='center';
+  const total=n; for(let dd=0;dd*96+72<total+12;dd++){const k=dd*96+72-12;if(k<0||k>=total)continue;cx.fillText(DIAS[(dd+1)%7],x(k),h-9);}
+  cx.textAlign='left';cx.fillText('Seg 06h',L,h-9);
+}
+let lastUI=0,lastHeat=0;
+function renderUI(now){
+  renderKPIs();renderLegend();renderPanel();renderLog();renderChart();renderDrawer(false);
+  if(now-lastHeat>900){renderHeat();renderNet();lastHeat=now;}
+}
+
+/* ---------- Menu de cálculos ---------- */
+const drawer=$('drawer'),TABS=['spot','post','zonas','log','formulas','params'];
+let tab='spot',lastDraw=0;
+const n2=(x,d=2)=>f2(x,d);
+const dotName=c=>`<i class="dot" style="background:${CRE[c].cor}"></i>${CRE[c].nome}`;
+function table(head,rows,cls=''){return `<div class="tablewrap"><table class="ct ${cls}"><thead><tr>${head.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table></div>`;}
+function setPlaying(v){playing=v;$('btnPlay').textContent=v?'Pausar':'Continuar';$('dPause').textContent=v?'Pausar':'Continuar';}
+function openDrawer(open){drawer.hidden=!open;if(open)setPlaying(false);$('btnCalc').setAttribute('aria-expanded',String(open));if(open){syncDrawerSel();renderDrawer(true);}}
+function syncDrawerSel(){const d=$('dSel');if(!d.options.length)d.innerHTML=$('selTotem').innerHTML;d.value=sel;}
+
+let spotKey='';
+function renderSpot(force){
+  const arr=S.traces,el=$('spotBody');
+  if(!arr.length){el.innerHTML='<p class="hint">Aguardando o próximo spot do totem selecionado. Com a simulação pausada, use “+1 spot”.</p>';$('trPos').textContent='–';return;}
+  let idx=viewStep==null?arr.length-1:arr.findIndex(x=>x.id===viewStep);if(idx<0)idx=0;
+  const tr=arr[idx];
+  const key=tr.id+'|'+JSON.stringify(PRM);
+  $('trPos').textContent=`${tr.stamp} · spot ${idx+1}/${arr.length}${viewStep==null?' · ao vivo':''}`;
+  if(key===spotKey&&!force)return;
+  spotKey=key;
+  $('trPos').textContent=`${tr.stamp} · spot ${idx+1}/${arr.length}${viewStep==null?' · ao vivo':''}`;
+  const N=tr.N,tot=N>0?N:1,auds=[];
+  for(let s=0;s<NS;s++)if(tr.cells[s])auds.push(s);
+  auds.sort((a,b)=>(N>0?tr.ne[b]-tr.ne[a]:tr.w[b]-tr.w[a]));
+  let h='';
+  h+=`<section class="calc"><h3><b>1</b>Chegada de pessoas</h3><pre>${tr.tot} · ${tr.zona} · ${tr.stamp}${tr.we?' (fim de semana)':''}
+λ = escala_totem × 13 × (perfil_zona(hora) + 0,03) × evento
+  = ${n2(tr.scale)} × 13 × (${n2(tr.prof)} + 0,03) × ${n2(tr.ev)} = ${n2(tr.lam)} olhares por spot de 30 s
+N ~ Poisson(${n2(tr.lam)})  →  N = ${N}${N===0?'  (ninguém olhando: o algoritmo usa o perfil esperado deste horário como audiência)':''}</pre></section>`;
+  h+=`<section class="calc"><h3><b>2</b>Câmera: perfil verdadeiro contra o que ela estimou</h3>${table(['Perfil','Verdadeiro','Câmera viu','Diferença'],
+    Array.from({length:NS},(_,s)=>`<tr><td>${segLabel(s)}</td><td>${tr.nt[s]}</td><td>${tr.ne[s]}</td><td>${tr.ne[s]-tr.nt[s]>0?'+':''}${tr.ne[s]-tr.nt[s]}</td></tr>`))}
+    <p class="hint">Acerto configurado: ${pc(PRM.acc,0)} por faixa etária. Neste spot a câmera errou ${tr.err} de ${N} classificações. O algoritmo só vê a coluna “Câmera viu”.</p></section>`;
+  h+=`<section class="calc"><h3><b>3</b>Priors hierárquicos e Beta de cada perfil × criativo</h3><pre>μ_rede = (a_rede + 0,2) / (n_rede + 10)
+μ_zona = (a_zona + K_zona·μ_rede) / (n_zona + K_zona)          K_zona = ${PRM.kz}
+a = a_totem + K_totem·μ_zona
+b = (n_totem − a_totem) + K_totem·(1 − μ_zona)                 K_totem = ${PRM.kt}
+θ ~ Beta(a, b)     (aproximação normal quando a + b > 60)</pre>`;
+  auds.forEach((s,k)=>{
+    const rows=tr.cells[s].map((c,ci)=>`<tr${ci===tr.choice?' class="pick"':''}><td>${dotName(ci)}</td><td>${pc(c.gm,2)}</td><td>${fmt(c.gn)}</td><td>${pc(c.zm,2)}</td><td>${fmt(c.zn)}</td><td>${n2(c.a)}</td><td>${n2(c.b)}</td><td>${pc(c.a/(c.a+c.b),2)}</td><td>${pc(c.th,2)}</td><td>${n2((N>0?tr.ne[s]:tr.w[s])*c.th,3)}</td></tr>`);
+    h+=`<details class="sd"${k<2?' open':''}><summary>${segLabel(s)} · n_s = ${N>0?tr.ne[s]:n2(tr.w[s],3)}${N===0?' (esperado)':''}</summary>${table(['Criativo','μ rede','n rede','μ zona','n zona','a','b','média','θ sorteado','n_s·θ'],rows)}</details>`;
+  });
+  h+='</section>';
+  h+=`<section class="calc"><h3><b>4</b>Pontuação e escolha (Thompson Sampling)</h3><pre>score_c = ( Σ_s n_s·θ_s,c / N ) × f̂_c            f̂_c = 0,35 + 0,65·exp(−r̂·E_c / 600)      r̂ = ${n2(PRM.rest)}
+escolhido = argmax score_c = ${CRE[tr.choice].nome}   (esperado ${pc(tr.exp,2)})</pre>
+    ${table(['Criativo','Σ n_s·θ','÷ N','Exposição E','Desgaste f̂','Score'],tr.raw.map((r,c)=>`<tr class="${c===tr.choice?'pick':c===tr.runner?'alt':''}"><td>${dotName(c)}${c===tr.choice?' ✔':c===tr.runner?' (2ª)':''}</td><td>${n2(r,3)}</td><td>${pc(r/tot,2)}</td><td>${fmt(tr.E[c])}</td><td>${n2(tr.fe[c],3)}</td><td>${pc(tr.v[c],2)}</td></tr>`))}</section>`;
+  h+=`<section class="calc"><h3><b>5</b>Referências: rotação fixa e oráculo</h3><pre>rotação: criativo = (spot + 3·índice_totem) mod nº de campanhas ativas  →  ${CRE[tr.rot].nome}
+oráculo: usa a taxa verdadeira e a audiência verdadeira, com desgaste projetado ${PRM.look} spots à frente  →  ${CRE[tr.orc].nome}</pre>
+    ${table(['Criativo','Taxa esperada do oráculo','Desgaste projetado'],tr.oV.map((v,c)=>`<tr class="${c===tr.orc?'pick':''}"><td>${dotName(c)}${c===tr.orc?' ✔':''}</td><td>${pc(v,2)}</td><td>${n2(tr.oF[c],3)}</td></tr>`))}</section>`;
+  const pn=['Algoritmo','Rotação fixa','Oráculo'];
+  h+=`<section class="calc"><h3><b>6</b>Resultado do spot</h3><pre>p = taxa_base(criativo, perfil real, zona, hora) × desgaste_real(r=${n2(tr.r)}, E)
+interação  ⇔  u < p        (o mesmo sorteio u vale para os três, então a comparação é justa)</pre>
+    ${table(['Política','Criativo','Desgaste real','Interações'],tr.out.map((o,p)=>`<tr><td>${pn[p]}</td><td>${dotName(o.c)}</td><td>${n2(o.f,3)}</td><td>${o.hits}</td></tr>`))}
+    ${tr.rows.length?table(['Pessoa','Perfil real','Câmera viu','u','p (algoritmo)','Resultado'],tr.rows.map((r,k)=>`<tr><td>#${k+1}</td><td>${segLabel(r.ts)}</td><td>${segLabel(r.us)}${r.us!==r.ts?' ✗':''}</td><td>${n2(r.u,3)}</td><td>${pc(r.p,2)}</td><td class="${r.hit?'hit':'miss'}">${r.hit?'interagiu':'ignorou'}</td></tr>`)):''}</section>`;
+  const ks=Object.keys(tr.upd);
+  h+=`<section class="calc"><h3><b>7</b>Aprendizado depois do spot</h3><pre>para cada pessoa: n[perfil visto pela câmera, criativo] += 1 ;  a[...] += 1 se interagiu
+atualiza o totem, a zona e a rede ao mesmo tempo.  A cada hora: a, n ×= ${n2(PRM.forget,3)}</pre>
+    ${ks.length?table(['Perfil visto','Criativo exibido','Olhares +n','Interações +a','Nova média do totem'],ks.map(s=>`<tr><td>${segLabel(+s)}</td><td>${dotName(tr.choice)}</td><td>+${tr.upd[s].n}</td><td>+${tr.upd[s].hit}</td><td>${pc(tr.post[s][tr.choice],2)}</td></tr>`)):'<p class="hint">Sem olhares, sem aprendizado neste spot.</p>'}</section>`;
+  el.innerHTML=h;
+}
+function renderPost(){
+  const tt=S.totems[sel],lvl=$('postLvl').value,G=B.G,Zc=B.Z[tt.zi],T=B.T[sel];
+  let mx=.001;const cell=[];
+  for(let s=0;s<NS;s++){cell.push([]);for(let c=0;c<NC;c++){
+    const k=s*NC+c,gm=(G.a[k]+.2)/(G.n[k]+10),zm=(Zc.a[k]+PRM.kz*gm)/(Zc.n[k]+PRM.kz);
+    let m,sd,n;
+    if(lvl==='rede'){m=gm;n=G.n[k];sd=Math.sqrt(m*(1-m)/(n+10));}
+    else if(lvl==='zona'){m=zm;n=Zc.n[k];sd=Math.sqrt(m*(1-m)/(n+PRM.kz));}
+    else{const a=T.a[k]+PRM.kt*zm,b=T.n[k]-T.a[k]+PRM.kt*(1-zm);m=a/(a+b);sd=Math.sqrt(a*b/((a+b)*(a+b)*(a+b+1)));n=T.n[k];}
+    cell[s].push({m,sd,n});if(m>mx)mx=m;}}
+  const rows=cell.map((r,s)=>{let bi=0;r.forEach((x,c)=>{if(x.m>r[bi].m)bi=c;});
+    return `<tr><td>${segLabel(s)}</td>${r.map((x,c)=>`<td style="background:color-mix(in srgb,var(--accent) ${Math.round(6+55*Math.pow(x.m/mx,1.6))}%,transparent);${c===bi?'font-weight:700;outline:2px solid var(--ink);outline-offset:-2px':''}">${pc(x.m,2)}<br><span style="color:var(--muted)">±${n2(x.sd*100,2)} · ${fmt(x.n)}</span></td>`).join('')}</tr>`;});
+  $('postBody').innerHTML=table(['Perfil',...CRE.map(c=>`<i class="dot" style="background:${c.cor}"></i>${c.nome.split(' ')[0]}`)],rows)+
+    `<p class="hint">Célula = média ± desvio · olhares acumulados (com esquecimento). Totem inspecionado: ${tt.nome}.</p>`;
+}
+function renderZonas(){
+  const rows=ZONES.map((z,zi)=>{let v=0,e=[0,0,0],n=0;S.totems.forEach(t=>{if(t.zi===zi){n++;v+=t.views;for(let p=0;p<3;p++)e[p]+=t.eng[p];}});
+    const g=e[1]>0?e[0]/e[1]-1:0;
+    return `<tr><td>${z.nome}</td><td>${n}</td><td>${fmt(v)}</td><td>${per1k(e[0],v)}</td><td>${per1k(e[1],v)}</td><td>${per1k(e[2],v)}</td><td class="${g>=0?'hit':''}">${(g>=0?'+':'')+f2(g*100,0)}%</td></tr>`;});
+  $('zonasBody').innerHTML=table(['Zona','Totens','Olhares','Algoritmo /1.000','Rotação /1.000','Oráculo /1.000','Ganho sobre rotação'],rows);
+}
+function renderLogTab(){
+  const on={dec:$('fDec').checked,troca:$('fTroca').checked,esq:$('fEsq').checked,marco:$('fMarco').checked};
+  const box=$('logBox'),stick=box.scrollTop+box.clientHeight>=box.scrollHeight-40;
+  box.innerHTML=S.lines.filter(l=>on[l.k]).slice(-220).map(l=>`<div class="${l.k}"><span class="t">${l.t}</span> <span class="k">${l.k}</span> ${l.x}</div>`).join('')||'<div>Sem registros ainda.</div>';
+  if(stick)box.scrollTop=box.scrollHeight;
+}
+function renderFormulas(){
+  $('tab-formulas').innerHTML=`
+  <div class="fgroup"><h3>Mundo simulado (o que o algoritmo não vê)</h3><div class="formula">fluxo:       N ~ Poisson( escala × 13 × (perfil_zona(hora, fim de semana) + 0,03) × evento )
+perfil:      w_s ∝ idade_zona × modificador_hora × gênero_zona          s = gênero × faixa etária (8 perfis)
+câmera:      acerta a faixa com prob. ${pc(PRM.acc,0)}; erra para a faixa vizinha (75% dos erros) ou troca o gênero
+taxa real:   p = base_c × afin_idade × afin_gênero × afin_zona × afin_hora        (máx. 9%)
+desgaste:    f = 0,35 + 0,65·exp(−r·E / 600)            E = olhares recentes do criativo no totem, meia-vida de 150 min
+interação:   u ~ U(0,1);  interagiu ⇔ u < p × f</div></div>
+  <div class="fgroup"><h3>Cérebro: Thompson Sampling contextual hierárquico</h3><div class="formula">contexto:    perfil estimado pela câmera de cada pessoa em frente à tela
+prior rede:  μ_rede = (a_rede + 0,2) / (n_rede + 10)
+prior zona:  μ_zona = (a_zona + ${PRM.kz}·μ_rede) / (n_zona + ${PRM.kz})
+posterior:   a = a_totem + ${PRM.kt}·μ_zona ;   b = (n_totem − a_totem) + ${PRM.kt}·(1 − μ_zona)
+amostra:     θ_s,c ~ Beta(a, b)
+audiência:   score_c = ( Σ_s n_s·θ_s,c / N ) × f̂_c ,     f̂_c = 0,35 + 0,65·exp(−${n2(PRM.rest)}·E_c / 600)
+decisão:     c* = argmax_c score_c
+aprendizado: n[s,c*] += 1 ; a[s,c*] += 1 se interagiu  (totem, zona e rede)
+memória:     a, n ×= ${n2(PRM.forget,3)} a cada hora</div></div>
+  <div class="fgroup"><h3>Referências e métrica</h3><div class="formula">rotação fixa: c = campanha ativa número (spot + 3·totem) mod nº de ativas
+oráculo:      argmax_c Σ_s n_s,real·p_s,c × f(E_c + λ·${PRM.look}) , com a audiência e a taxa verdadeiras
+eficiência:   Σ interações_política / Σ interações_oráculo , janela móvel de 3 h
+ganho:        interações_algoritmo / interações_rotação − 1</div></div>`;
+}
+const PARAMS=[
+  {k:'acc',l:'Acerto da câmera por faixa etária',min:.6,max:.99,step:.01,f:v=>pc(v,0),n:'Mundo simulado. Com menos acerto, o algoritmo aprende com rótulos mais ruidosos.'},
+  {k:'kz',l:'Força do prior da zona (K_zona)',min:0,max:200,step:5,f:v=>v,n:'Quanto o conhecimento da rede pesa sobre o da zona. 0 = zona aprende sozinha.'},
+  {k:'kt',l:'Força do prior do totem (K_totem)',min:0,max:200,step:5,f:v=>v,n:'Quanto o conhecimento da zona pesa sobre um totem novo. 0 = cada totem aprende sozinho.'},
+  {k:'forget',l:'Fator de esquecimento por hora',min:.95,max:1,step:.001,f:v=>n2(v,3),n:'1,000 = nunca esquece. Valores menores acompanham mudanças, mas guardam menos dados.'},
+  {k:'rest',l:'Desgaste assumido pelo algoritmo (r̂)',min:0,max:1,step:.05,f:v=>n2(v),n:'0 = ignora o desgaste e repete o criativo líder.'},
+  {k:'look',l:'Horizonte do oráculo (spots)',min:0,max:40,step:1,f:v=>v,n:'Só afeta a referência de 100%: quanto o oráculo antecipa o desgaste.'},
+  {k:'cpm',l:'Preço por 1.000 olhares (R$)',min:5,max:60,step:1,f:v=>'R$ '+v,n:'Economia. Só afeta custo por interação e retorno no painel Anunciantes.'},
+  {k:'val',l:'Valor de uma interação para o anunciante (R$)',min:1,max:30,step:1,f:v=>'R$ '+v,n:'Economia. Usado no retorno sobre o investimento.'},
+];
+function buildParams(){
+  $('paramList').innerHTML=PARAMS.map(p=>`<div class="prm"><label for="pr_${p.k}">${p.l}</label><output id="po_${p.k}">${p.f(PRM[p.k])}</output><input type="range" id="pr_${p.k}" min="${p.min}" max="${p.max}" step="${p.step}" value="${PRM[p.k]}"><small>${p.n}</small></div>`).join('');
+  PARAMS.forEach(p=>$('pr_'+p.k).addEventListener('input',e=>{PRM[p.k]=+e.target.value;$('po_'+p.k).textContent=p.f(PRM[p.k]);renderFormulas();}));
+}
+function renderDrawer(force){
+  if(drawer.hidden)return;
+  if(tab==='spot')renderSpot(force);else if(tab==='post')renderPost();else if(tab==='zonas')renderZonas();else if(tab==='log')renderLogTab();
+  if(force&&tab==='formulas')renderFormulas();
+}
+function copyText(text,fallbackEl){
+  const fb=()=>{if(fallbackEl){fallbackEl.hidden=false;fallbackEl.value=text;fallbackEl.select();}};
+  try{navigator.clipboard.writeText(text).catch(fb);}catch(e){fb();}
+}
+$('btnCalc').addEventListener('click',()=>openDrawer(drawer.hidden));
+$('dClose').addEventListener('click',()=>openDrawer(false));
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!drawer.hidden)openDrawer(false);});
+$('dTabs').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;tab=b.dataset.tab;
+  [...$('dTabs').children].forEach(x=>x.setAttribute('aria-selected',String(x===b)));TABS.forEach(t=>$('tab-'+t).hidden=t!==tab);renderDrawer(true);});
+$('dSel').addEventListener('change',e=>select(+e.target.value));
+$('dPause').addEventListener('click',()=>setPlaying(!playing));
+$('dStep').addEventListener('click',()=>stepOnce());
+$('btnStep').addEventListener('click',()=>stepOnce());
+function stepOnce(){setPlaying(false);step();viewStep=null;renderUI(performance.now());}
+$('trPrev').addEventListener('click',()=>{const a=S.traces;if(!a.length)return;let i=viewStep==null?a.length-1:a.findIndex(x=>x.id===viewStep);if(i<0)i=0;viewStep=a[Math.max(0,i-1)].id;renderSpot();});
+$('trNext').addEventListener('click',()=>{const a=S.traces;if(!a.length||viewStep==null)return;const i=a.findIndex(x=>x.id===viewStep);if(i<0||i>=a.length-1){viewStep=null;}else viewStep=a[i+1].id;renderSpot();});
+$('trLive').addEventListener('click',()=>{viewStep=null;renderSpot();});
+$('trCopy').addEventListener('click',()=>{const a=S.traces;if(!a.length)return;const i=viewStep==null?a.length-1:Math.max(0,a.findIndex(x=>x.id===viewStep));copyText(JSON.stringify(a[i],null,1),$('copyArea'));});
+$('postLvl').addEventListener('change',renderPost);
+['fDec','fTroca','fEsq','fMarco'].forEach(id=>$(id).addEventListener('change',renderLogTab));
+$('logCopy').addEventListener('click',()=>{const t=[...$('logBox').children].map(d=>d.textContent).join('\n');copyText(t,null);
+  const rg=document.createRange();rg.selectNodeContents($('logBox'));const s=getSelection();s.removeAllRanges();s.addRange(rg);});
+$('paramReset').addEventListener('click',()=>{Object.assign(PRM,DEF);buildParams();renderFormulas();});
+buildParams();renderFormulas();
+
+/* ---------- Painel da rede, cenários e campanhas ---------- */
+const brl=x=>x==null?'–':'R$ '+f2(x,2);
+let legKey='',netLast=0;
+function renderLegend(){
+  const cnt=new Array(NC).fill(0);S.totems.forEach(t=>cnt[t.cur[0]]++);
+  const key=cnt.join(',')+CON.join('')+mode;if(key===legKey)return;legKey=key;
+  const hint=mode==='gan'?'Verde: algoritmo acima da rotação neste totem · vermelho: abaixo · cinza: poucos dados':mode==='flx'?'O brilho cresce com o fluxo de pessoas':'';
+  $('legend').innerHTML=CRE.map((c,k)=>`<button type="button" class="chip" data-c="${k}" aria-pressed="${CON[k]}" title="${CON[k]?'Clique para pausar esta campanha':'Clique para retomar esta campanha'}"><i style="background:${c.cor}"></i>${c.nome}<em>${cnt[k]}</em></button>`).join('')+
+   '<span class="sep"></span><span class="people"><i style="background:var(--dot-m)"></i>Homens <i style="background:var(--dot-f);margin-left:8px"></i>Mulheres · o tamanho do ponto segue a idade · clique num criativo para pausar a campanha</span>'+(hint?'<span class="sep"></span><span class="people">'+hint+'</span>':'');
+}
+function zoneBest(){
+  return ZONES.map((z,zi)=>{
+    const sh=new Float64Array(NS);let tot=0;
+    S.totems.forEach(t=>{if(t.zi===zi)for(let s=0;s<NS;s++){sh[s]+=t.recent[s];tot+=t.recent[s];}});
+    if(tot<=0)return null;
+    const Zc=B.Z[zi],G=B.G,sc=[];
+    for(let c=0;c<NC;c++){let v=0;for(let s=0;s<NS;s++){const k=s*NC+c,gm=(G.a[k]+.2)/(G.n[k]+10);v+=sh[s]/tot*(Zc.a[k]+PRM.kz*gm)/(Zc.n[k]+PRM.kz);}sc.push(v);}
+    const order=[...sc.keys()].filter(c=>CON[c]).sort((a,b)=>sc[b]-sc[a]);
+    let dom=0;for(let s=1;s<NS;s++)if(sh[s]>sh[dom])dom=s;
+    return {z,best:order[0],second:order[1],v:sc[order[0]],v2:order[1]!=null?sc[order[1]]:0,dom,pct:sh[dom]/tot};
+  });
+}
+function renderNet(){
+  const cs=S.cs,T=S.tot,cpm=PRM.cpm,val=PRM.val;
+  const inv=T.v*cpm/1000,retA=T.e[0]*val,retR=T.e[1]*val;
+  const tot=p=>{let t=0;for(let c=0;c<NC;c++)t+=cs[p].s[c];return t;},tA=tot(0),tR=tot(1);
+  const cpi=(p,c)=>cs[p].e[c]>0?cs[p].v[c]*cpm/1000/cs[p].e[c]:null;
+  const rows=CRE.map((cr,c)=>`<tr${CON[c]?'':' class="alt"'}><td>${dotName(c)}${CON[c]?'':' (pausado)'}</td><td>${tA?pc(cs[0].s[c]/tA,0):'–'}</td><td>${per1k(cs[0].e[c],cs[0].v[c])}</td><td>${per1k(cs[1].e[c],cs[1].v[c])}</td><td>${brl(cpi(0,c))}</td><td>${brl(cpi(1,c))}</td></tr>`);
+  const cA=T.e[0]>0?inv/T.e[0]:null,cR=T.e[1]>0?inv/T.e[1]:null;
+  rows.push(`<tr class="pick"><td>Rede inteira</td><td>100%</td><td>${per1k(T.e[0],T.v)}</td><td>${per1k(T.e[1],T.v)}</td><td>${brl(cA)}</td><td>${brl(cR)}</td></tr>`);
+  $('advBody').innerHTML=table(['Criativo','Fatia dos spots (algoritmo)','Interações /1.000 algoritmo','Interações /1.000 rotação','Custo por interação algoritmo','Custo por interação rotação'],rows);
+  $('econSum').innerHTML=`Investimento estimado: <b>${brl(inv)}</b> (${fmt(T.v)} olhares a ${brl(cpm)} por mil). Retorno com o algoritmo: <b>${brl(retA)}</b> (${inv>0?f2(retA/inv,2):'–'}×). Com a rotação: <b>${brl(retR)}</b> (${inv>0?f2(retR/inv,2):'–'}×). `+(cA&&cR?`O algoritmo reduz o custo por interação em <b>${f2((1-cA/cR)*100,0)}%</b>.`:'');
+  const zb=zoneBest();
+  $('zoneBest').innerHTML=zb.map((r,zi)=>r?`<div><i style="background:${CRE[r.best].cor}"></i><span><b>${r.z.nome}</b> · ${CRE[r.best].nome}${r.second!=null?` <small style="color:var(--muted)">(2º ${CRE[r.second].nome.split(' ')[0]})</small>`:''}</span><b>${pc(r.v)}</b></div><div style="margin:-4px 0 2px 18px;color:var(--muted);font-size:12px">${Math.round(r.pct*100)}% ${segLabel(r.dom)}</div>`:`<div><span>${ZONES[zi].nome}: sem dados</span></div>`).join('');
+  const eligible=S.totems.filter(t=>t.views>=300&&t.eng[1]>0).map(t=>({t,g:t.eng[0]/t.eng[1]-1})).sort((a,b)=>b.g-a.g);
+  const rk=x=>`<button type="button" class="rk" data-t="${x.t.id}"><span>${x.t.nome}<small style="color:var(--muted)"> · ${ZONES[x.t.zi].nome}</small></span><b class="${x.g>=0?'up':'dn'}">${(x.g>=0?'+':'')+f2(x.g*100,0)}%</b></button>`;
+  $('rankBody').innerHTML=eligible.length?'<h3 class="mini">Maiores ganhos</h3>'+eligible.slice(0,4).map(rk).join('')+'<h3 class="mini">Menores ganhos</h3>'+eligible.slice(-4).reverse().map(rk).join(''):'<p class="hint">Reunindo dados…</p>';
+  const wear=[];
+  S.totems.forEach(t=>{for(let c=0;c<NC;c++){const e=t.E[0][c],f=.35+.65*Math.exp(-PRM.rest*e/600),d=(1-f)/.65;if(d>.25)wear.push({t,c,d});}});
+  wear.sort((a,b)=>b.d-a.d);
+  $('wearBody').innerHTML=wear.length?wear.slice(0,4).map(w=>`<button type="button" class="rk" data-t="${w.t.id}"><i class="dot" style="background:${CRE[w.c].cor}"></i><span>${w.t.nome} · ${CRE[w.c].nome}</span><b class="dn">${Math.round(w.d*100)}%</b></button>`).join(''):'<p class="hint">Nenhum criativo passa de 25% de desgaste.</p>';
+}
+function csvText(){
+  const cs=S.cs,cpm=PRM.cpm,x=(v,d=2)=>Number(v).toFixed(d);
+  let t='criativo,spots_algoritmo,olhares_algoritmo,interacoes_algoritmo,custo_interacao_algoritmo,spots_rotacao,olhares_rotacao,interacoes_rotacao,custo_interacao_rotacao\n';
+  CRE.forEach((c,k)=>{const ca=cs[0].e[k]>0?cs[0].v[k]*cpm/1000/cs[0].e[k]:'',cr=cs[1].e[k]>0?cs[1].v[k]*cpm/1000/cs[1].e[k]:'';
+    t+=[c.nome,cs[0].s[k],cs[0].v[k],cs[0].e[k],ca===''?'':x(ca),cs[1].s[k],cs[1].v[k],cs[1].e[k],cr===''?'':x(cr)].join(',')+'\n';});
+  t+='\ntotem,zona,olhares,interacoes_algoritmo,interacoes_rotacao,interacoes_oraculo\n';
+  S.totems.forEach(tt=>{t+=[tt.nome,ZONES[tt.zi].nome,tt.views,tt.eng[0],tt.eng[1],tt.eng[2]].join(',')+'\n';});
+  return t;
+}
+$('legend').addEventListener('click',e=>{
+  const b=e.target.closest('.chip');if(!b)return;const c=+b.dataset.c;
+  if(CON[c]&&CON.filter(Boolean).length<=1)return;
+  CON[c]=!CON[c];legKey='';pushLine('marco',`Campanha ${CRE[c].nome} ${CON[c]?'retomada':'pausada'}`);renderLegend();
+});
+document.addEventListener('click',e=>{const b=e.target.closest('.rk');if(b)select(+b.dataset.t);});
+$('segEv').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;const k=b.dataset.v;EV[k]=!EV[k];
+  b.setAttribute('aria-pressed',String(EV[k]));pushLine('marco',`Cenário “${EVN[k]}” ${EV[k]?'ativado':'desativado'}`);
+});
+$('csvCopy').addEventListener('click',()=>copyText(csvText(),$('csvArea')));
+document.addEventListener('keydown',e=>{
+  if(e.ctrlKey||e.metaKey||e.altKey||/^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName))return;
+  if(e.key==='c'||e.key==='C'){openDrawer(drawer.hidden);}
+  else if(e.key==='n'||e.key==='N'){stepOnce();}
+  else if(e.key===' '&&e.target===document.body){e.preventDefault();setPlaying(!playing);}
+});
+
+/* ---------- Laço principal ---------- */
+let last=performance.now(),debt=0;
+function frame(now){
+  const dt=Math.min(.1,(now-last)/1000);last=now;
+  if(ffTarget){
+    const t0=performance.now();
+    while(S.t<ffTarget&&performance.now()-t0<24)step();
+    $('ffMsg').textContent=S.t>=ffTarget?'':`Avançando… ${Math.round(100-100*(ffTarget-S.t)/86400)}%`;
+    if(S.t>=ffTarget){ffTarget=0;$('ffMsg').textContent='';}
+  }else if(playing){
+    debt+=dt*speed*2;
+    const t0=performance.now();
+    while(debt>=1&&performance.now()-t0<10){step();debt--;}
+    if(debt>60)debt=60;
+  }
+  drawMap(now,dt);
+  if(now-lastUI>250){lastUI=now;renderUI(now);}
+  requestAnimationFrame(frame);
+}
+
+/* ---------- Controles ---------- */
+$('btnPlay').addEventListener('click',()=>setPlaying(!playing));
+$('segSpeed').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;speed=+b.dataset.v;
+  [...$('segSpeed').children].forEach(x=>x.setAttribute('aria-pressed',x===b));if(!playing)setPlaying(true);});
+$('segMode').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;mode=b.dataset.v;
+  [...$('segMode').children].forEach(x=>x.setAttribute('aria-pressed',x===b));});
+$('btnDay').addEventListener('click',()=>{ffTarget=S.t+86400;});
+$('btnReset').addEventListener('click',()=>{ffTarget=0;debt=0;init(Math.floor(Math.random()*1e9));buildSelect();for(let k=0;k<10;k++)step();lastHeat=0;renderUI(performance.now());});
+$('chkTruth').addEventListener('change',e=>{showTruth=e.target.checked;renderHeat();});
+new ResizeObserver(()=>{buildStatic();}).observe(cvs.parentElement);
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>setTimeout(buildStatic,50));
+
+init(20261022);
+buildSelect();
+for(let k=0;k<10;k++)step();
+buildStatic();
+renderUI(performance.now());
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
