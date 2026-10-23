@@ -19,6 +19,30 @@
   const horaLocal=iso=>{const m=/T(\d{2}):/.exec(iso);return m?+m[1]:0;};   // hora do relógio do próprio totem
   const periodoDe=iso=>Math.floor(horaLocal(iso)/3);
 
+  /* o pedido de decidir só aceita contagens: totem, leitura (8 inteiros) e quando. Qualquer outro campo é recusado,
+     para que um totem nunca consiga mandar imagem, identificador ou outro dado por esse caminho (docs/PRIVACIDADE.md). */
+  const CAMPOS_PEDIDO=['totem','leitura','quando'];
+  const inteiro=v=>Number.isInteger(v)&&v>=0;
+  function validarPedido(p){
+    if(p===null||typeof p!=='object'||Array.isArray(p))return ['o pedido deve ser um objeto'];
+    const e=[];
+    for(const k of Object.keys(p))if(!CAMPOS_PEDIDO.includes(k))e.push(`campo desconhecido: ${k}`);
+    if(p.totem!==undefined&&typeof p.totem!=='string')e.push('totem deve ser um texto');
+    const L=p.leitura;
+    if(L!==undefined){
+      if(Array.isArray(L)){
+        if(L.length!==NS)e.push(`leitura em lista deve ter ${NS} valores`);
+        L.forEach((v,s)=>{if(!inteiro(v))e.push(`leitura[${s}] deve ser um inteiro maior ou igual a zero`);});
+      }else if(L===null||typeof L!=='object')e.push('leitura deve ser um objeto com os perfis ou uma lista de 8 valores');
+      else for(const [k,v] of Object.entries(L)){
+        if(!PERFIS.includes(k))e.push(`leitura: perfil desconhecido ${k}`);
+        else if(!inteiro(v))e.push(`leitura.${k} deve ser um inteiro maior ou igual a zero`);
+      }
+    }
+    if(p.quando!==undefined&&!(typeof p.quando==='string'&&/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$/.test(p.quando)))e.push('quando deve ser data e hora ISO 8601 com fuso');
+    return e;
+  }
+
   /* devolve a lista de problemas do cadastro de totens e criativos (vazia se estiver certo) */
   function validarCadastro(cad){
     const erros=[];
@@ -132,6 +156,8 @@
 
     /* p.totem: id do totem · p.leitura: pessoas à frente agora, por perfil (objeto com os perfis ou lista de 8) · p.quando: hora, ISO 8601 */
     function decidir(p){
+      const er=validarPedido(p);
+      if(er.length)throw Object.assign(new Error('pedido inválido: '+er.join('; ')),{pedido:true});
       const i=iTotem.get(p&&p.totem);
       if(i===undefined)throw new Error(`totem desconhecido: ${p&&p.totem}`);
       const aud=new Float64Array(NS),L=p.leitura||{};
@@ -174,5 +200,5 @@
     return {decidir,registrar,campanha,aprendido,estado,exportar,brain,cadastro:cad};
   }
 
-  return {criar,validarCadastro};
+  return {criar,validarCadastro,validarPedido};
 });

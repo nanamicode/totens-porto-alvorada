@@ -76,6 +76,7 @@ tests/atraso.test.js            testes da conversão com atraso
 tests/cenario.test.js           testes dos cenários salvos
 tests/lancamento.test.js        testes do criativo novo no meio da operação
 tests/metas.test.js             testes das metas de entrega por anunciante
+tests/privacidade.test.js       garantias de privacidade: só contagens, nada guardado além delas
 tests/operador.test.js          testes do Operador e do servidor
 tools/headless.js               roda o simulador sem navegador
 tools/avaliar.js                comando de avaliação com várias sementes
@@ -131,6 +132,8 @@ brain.forget();                                                // uma vez por ho
 ## Privacidade
 
 Num uso real, o sistema deve só contar pessoas e estimar faixa etária e gênero de forma agregada, sem reconhecer rostos nem guardar imagens, em linha com a LGPD. Isso precisa de revisão jurídica antes de qualquer instalação.
+
+O que este código recebe e guarda, o que ele impede, o que não consegue garantir (a câmera do totem, a infraestrutura), as perguntas para o jurídico e um rascunho de aviso ao público estão em [docs/PRIVACIDADE.md](docs/PRIVACIDADE.md). Não é parecer jurídico.
 
 ## Estado do projeto
 
