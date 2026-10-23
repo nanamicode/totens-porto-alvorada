@@ -49,6 +49,19 @@ oráculo:      passa a maximizar interações × cv_c
 
 Com `atraso = 0` nada disso roda e o resultado é idêntico ao de antes. `Brain` oferece `learn`/`learnLote` com `eSnap` (a exposição na hora da exibição) e `credit`. O operador (`operador.js`) ainda não recebe conversões atrasadas: só o simulador as gera.
 
+## Criativo novo no meio da operação
+
+O oitavo criativo (Orla Sorvetes) fica reservado: sem o botão **Lançar criativo novo** ele não é exibido por ninguém e não aparece nas tabelas. Ao lançar, ele entra com a rede operando e **sem nenhuma contagem aprendida**: o algoritmo só o conhece pelo prior (taxa média da rede, com peso K_zona e K_totem), e a amostragem de Thompson cuida da exploração.
+
+```
+testado:   metade dos totens já o exibiu pelo menos uma vez
+adotado:   numa janela de 30 min, o algoritmo o exibe em pelo menos 80% dos spots em que o oráculo o exibe
+           (e o oráculo o exibe em pelo menos 30 spots da janela; senão não há o que adotar)
+qualidade: o parâmetro qnovo multiplica a taxa verdadeira do criativo no momento do lançamento (1 = bom, 0,3 = fraco)
+```
+
+O lançamento é uma mudança do tipo `campanha` com índice 7, então entra nos cenários salvos e se refaz igual. Uma cidade nova (Reiniciar) volta sem o criativo lançado. Medição em `tools/lancar.js`.
+
 ## Referências e métrica
 
 ```

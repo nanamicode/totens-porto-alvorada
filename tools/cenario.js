@@ -7,7 +7,7 @@
    interações. Códigos de saída: 0 refeito (e conferido, se havia números), 2 arquivo inválido, 4 números diferentes.
    --novo: grava um cenário a partir de opções, com os números desta execução.
      --semente=N  --passos=N (spots de 30 s, padrão 1440)  --evento=chuva,greve  --pausar=0,3  --nome="..."
-     --kz=0 --kt=0 e os demais parâmetros: acc, kz, kt, rest, forget, look, cpm, val, corrige, estima, contexto, kp, atraso, espera */
+     --kz=0 --kt=0 e os demais parâmetros: acc, kz, kt, rest, forget, look, cpm, val, corrige, estima, contexto, kp, atraso, espera, qnovo */
 const fs = require('fs');
 const { simular } = require('./headless.js');
 const Cenario = require('../site/js/cenario.js');

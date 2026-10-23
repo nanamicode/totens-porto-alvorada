@@ -1,6 +1,6 @@
 'use strict';
 /* Configuração: segmentos, criativos, zonas, parâmetros, cenários e funções de apoio do mundo simulado. */
-const W=970,H=640,NC=7,NS=8;
+const W=970,H=640,NC=8,NS=8,RES=7;   // RES: o criativo reservado, lançado no meio da operação (docs/ALGORITMO.md)
 const AGES=['18–24','25–34','35–49','50+'],GEN=['Homem','Mulher'];
 const segLabel=s=>GEN[s>>2]+' '+AGES[s&3];
 const DIAS=['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
@@ -14,6 +14,8 @@ const CRE=[
  {nome:'Voa Idiomas',tag:'Aula experimental',cor:'#3b9ae1',base:.027,cv:.15,dl:2,age:[1.5,1.2,.6,.3],gen:[.9,1.1],zone:{uni:1.4,centro:1,resid:.9},tm:h=>1+.2*pk(h,18.5,2)},
  {nome:'Vento Running',tag:'Tênis de corrida -30%',cor:'#e0508c',base:.030,cv:.35,dl:2.5,age:[.9,1.3,1.1,.5],gen:[1.2,.85],zone:{parque:1.5,shopping:1.1,estacao:.9,noite:.6},tm:h=>1+.3*pk(h,7,1.3)+.2*pk(h,18,1.5)},
  {nome:'Clínica Bem Viver',tag:'Check-up completo',cor:'#6bbf59',base:.028,cv:.12,dl:2,age:[.2,.5,1.2,1.8],gen:[.85,1.15],zone:{resid:1.4,centro:1,shopping:1.1,uni:.4,noite:.3},tm:h=>1+.25*pk(h,10,2.2)},
+ /* reservado: só entra em campo quando o botão "Lançar criativo novo" é apertado. Bom no parque, no comércio e no campus à tarde. */
+ {nome:'Orla Sorvetes',tag:'Casquinha em dobro na tarde',cor:'#c9a27e',base:.034,cv:.28,dl:.6,age:[1.4,1.3,.9,.6],gen:[.95,1.05],zone:{parque:1.6,shopping:1.3,uni:1.2,estacao:.9,centro:.9,noite:.8},tm:h=>1+.5*pk(h,15.5,2.5)},
 ];
 const ZONES=[
  {id:'uni',nome:'Campus',cx:150,cy:140,ageW:[.55,.27,.10,.08],gM:.47,fat:[.4,.6],sc:[.7,1.1],tint:'#3b9ae1',
@@ -41,10 +43,11 @@ const ZONES=[
 const ZI={};ZONES.forEach((z,i)=>ZI[z.id]=i);
 const HAGE=h=>h>=22||h<6?[1.6,1.5,.7,.25]:h<10?[.9,1,1.2,.9]:h<17?[.9,.9,1,1.4]:[1.1,1.1,1,.7];
 const XS=[60,200,350,500,650,790,910],YS=[50,180,310,440,570];
-const DEF={acc:.86,kz:40,kt:60,rest:.4,forget:.985,look:16,cpm:18,val:8,corrige:1,estima:1,contexto:0,kp:10,atraso:0,espera:0};
+const DEF={acc:.86,kz:40,kt:60,rest:.4,forget:.985,look:16,cpm:18,val:8,corrige:1,estima:1,contexto:0,kp:10,atraso:0,espera:0,qnovo:1};
 /* conversão com atraso (docs/ALGORITMO.md): cv de cada criativo = chance de uma interação virar conversão, dl = quanto o atraso dele é maior ou menor que a média; atraso = tempo médio até ela chegar, em minutos (0 = desligado); espera k > 0 = aprende só depois de uma janela de k vezes o atraso médio, 0 = conta já como falha */
 const PRM=Object.assign({},DEF);   // acc: câmera · kz,kt: força dos priors · rest: desgaste assumido · forget: esquecimento/h · look: horizonte do oráculo · cpm,val: economia
 const CON=new Array(NC).fill(true);   // campanhas ativas
+CON[RES]=false;                        // o criativo reservado só entra no lançamento
 const EV={chuva:false,show:false,greve:false,feriado:false};
 const EVN={chuva:'Chuva forte',show:'Show na Praça da Música',greve:'Greve na estação',feriado:'Feriado'};
 function evMul(z){let m=1;

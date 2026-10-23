@@ -28,6 +28,11 @@ $('segSpeed').addEventListener('click',e=>{const b=e.target.closest('button');if
 $('segMode').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;mode=b.dataset.v;
   [...$('segMode').children].forEach(x=>x.setAttribute('aria-pressed',x===b));});
 $('btnDay').addEventListener('click',()=>{if(!emLote)ffTarget=S.t+86400;});
+$('btnLancar').addEventListener('click',()=>{
+  if(emLote||S.lanc)return;
+  CON[RES]=true;registrarMudanca('campanha',RES,true);iniciarLancamento();
+  legKey='';pushLine('marco',`Criativo novo lançado: ${CRE[RES].nome}, sem nenhuma contagem aprendida`);renderLegend();renderUI(performance.now());
+});
 $('btnReset').addEventListener('click',()=>{if(emLote)return;ffTarget=0;debt=0;init(Math.floor(Math.random()*1e9));buildSelect();for(let k=0;k<10;k++)step();lastHeat=0;renderUI(performance.now());});
 $('chkTruth').addEventListener('change',e=>{showTruth=e.target.checked;renderHeat();});
 new ResizeObserver(()=>{buildStatic();}).observe(cvs.parentElement);

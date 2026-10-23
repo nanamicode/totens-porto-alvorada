@@ -43,7 +43,7 @@ Códigos de saída ao refazer: 0 refeito (e conferido, se havia números), 2 arq
 | `semente` | Inteiro de 0 a 4.294.967.295. Define a cidade e todo o sorteio. |
 | `passos` | Quantos spots de 30 s a sessão tem (de 0 a 43.200, ou 15 dias). 120 passos são 1 hora. |
 | `config0` | A configuração quando a cidade foi criada: `params` (parâmetros do algoritmo e da câmera), `eventos` (chuva, show, greve, feriado) e `campanhasPausadas` (índices de 0 a 6). **O que não vier volta ao padrão.** |
-| `mudancas` | O que foi mudado depois, em ordem: `passo` (em que passo aconteceu), `tipo` (`param`, `evento` ou `campanha`), `chave` e `valor`. No máximo 2.000. |
+| `mudancas` | O que foi mudado depois, em ordem: `passo` (em que passo aconteceu), `tipo` (`param`, `evento` ou `campanha`), `chave` e `valor`. No máximo 2.000. A campanha de índice 7 é o criativo novo: `{ "tipo": "campanha", "chave": 7, "valor": true }` é o lançamento (veja docs/ALGORITMO.md). |
 | `resultado` | Opcional. Olhares e as 3 contagens de interações (algoritmo, rotação, oráculo) no ponto salvo, para conferir. |
 
 Quem valida é `Cenario.validar` (`site/js/cenario.js`), e cada erro diz o que está errado.

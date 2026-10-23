@@ -7,7 +7,7 @@ function renderLegend(){
   const cnt=new Array(NC).fill(0);S.totems.forEach(t=>cnt[t.cur[0]]++);
   const key=cnt.join(',')+CON.join('')+mode;if(key===legKey)return;legKey=key;
   const hint=mode==='gan'?'Verde: algoritmo acima da rotação neste totem · vermelho: abaixo · cinza: poucos dados':mode==='flx'?'O brilho cresce com o fluxo de pessoas':'';
-  $('legend').innerHTML=CRE.map((c,k)=>`<button type="button" class="chip" data-c="${k}" aria-pressed="${CON[k]}" title="${CON[k]?'Clique para pausar esta campanha':'Clique para retomar esta campanha'}"><i style="background:${c.cor}"></i>${c.nome}<em>${cnt[k]}</em></button>`).join('')+
+  $('legend').innerHTML=CRE.map((c,k)=>k===RES&&!S.lanc?'':`<button type="button" class="chip" data-c="${k}" aria-pressed="${CON[k]}" title="${CON[k]?'Clique para pausar esta campanha':'Clique para retomar esta campanha'}"><i style="background:${c.cor}"></i>${c.nome}<em>${cnt[k]}</em></button>`).join('')+
    '<span class="sep"></span><span class="people"><i style="background:var(--dot-m)"></i>Homens <i style="background:var(--dot-f);margin-left:8px"></i>Mulheres · o tamanho do ponto segue a idade · clique num criativo para pausar a campanha</span>'+(hint?'<span class="sep"></span><span class="people">'+hint+'</span>':'');
 }
 function zoneBest(){
@@ -27,8 +27,9 @@ function renderNet(){
   const inv=T.v*cpm/1000,retA=T.e[0]*val,retR=T.e[1]*val;
   const tot=p=>{let t=0;for(let c=0;c<NC;c++)t+=cs[p].s[c];return t;},tA=tot(0),tR=tot(1);
   const cpi=(p,c)=>cs[p].e[c]>0?cs[p].v[c]*cpm/1000/cs[p].e[c]:null;
-  const rows=CRE.map((cr,c)=>`<tr${CON[c]?'':' class="alt"'}><td>${dotName(c)}${CON[c]?'':' (pausado)'}</td><td>${tA?pc(cs[0].s[c]/tA,0):'–'}</td><td>${per1k(cs[0].e[c],cs[0].v[c])}</td><td>${per1k(cs[1].e[c],cs[1].v[c])}</td><td>${brl(cpi(0,c))}</td><td>${brl(cpi(1,c))}</td></tr>`);
+  const rows=CRE.map((cr,c)=>c===RES&&!S.lanc?'':`<tr${CON[c]?'':' class="alt"'}><td>${dotName(c)}${CON[c]?'':' (pausado)'}</td><td>${tA?pc(cs[0].s[c]/tA,0):'–'}</td><td>${per1k(cs[0].e[c],cs[0].v[c])}</td><td>${per1k(cs[1].e[c],cs[1].v[c])}</td><td>${brl(cpi(0,c))}</td><td>${brl(cpi(1,c))}</td></tr>`);
   const cA=T.e[0]>0?inv/T.e[0]:null,cR=T.e[1]>0?inv/T.e[1]:null;
+  rows.splice(0,rows.length,...rows.filter(Boolean));
   rows.push(`<tr class="pick"><td>Rede inteira</td><td>100%</td><td>${per1k(T.e[0],T.v)}</td><td>${per1k(T.e[1],T.v)}</td><td>${brl(cA)}</td><td>${brl(cR)}</td></tr>`);
   $('advBody').innerHTML=table(['Criativo','Fatia dos spots (algoritmo)','Interações /1.000 algoritmo','Interações /1.000 rotação','Custo por interação algoritmo','Custo por interação rotação'],rows);
   $('econSum').innerHTML=`Investimento estimado: <b>${brl(inv)}</b> (${fmt(T.v)} olhares a ${brl(cpm)} por mil). Retorno com o algoritmo: <b>${brl(retA)}</b> (${inv>0?f2(retA/inv,2):'–'}×). Com a rotação: <b>${brl(retR)}</b> (${inv>0?f2(retR/inv,2):'–'}×). `+(cA&&cR?`O algoritmo reduz o custo por interação em <b>${f2((1-cA/cR)*100,0)}%</b>.`:'');
@@ -45,7 +46,7 @@ function renderNet(){
 function csvText(){
   const cs=S.cs,cpm=PRM.cpm,x=(v,d=2)=>Number(v).toFixed(d);
   let t='criativo,spots_algoritmo,olhares_algoritmo,interacoes_algoritmo,custo_interacao_algoritmo,spots_rotacao,olhares_rotacao,interacoes_rotacao,custo_interacao_rotacao\n';
-  CRE.forEach((c,k)=>{const ca=cs[0].e[k]>0?cs[0].v[k]*cpm/1000/cs[0].e[k]:'',cr=cs[1].e[k]>0?cs[1].v[k]*cpm/1000/cs[1].e[k]:'';
+  CRE.forEach((c,k)=>{if(k===RES&&!S.lanc)return;const ca=cs[0].e[k]>0?cs[0].v[k]*cpm/1000/cs[0].e[k]:'',cr=cs[1].e[k]>0?cs[1].v[k]*cpm/1000/cs[1].e[k]:'';
     t+=[c.nome,cs[0].s[k],cs[0].v[k],cs[0].e[k],ca===''?'':x(ca),cs[1].s[k],cs[1].v[k],cs[1].e[k],cr===''?'':x(cr)].join(',')+'\n';});
   t+='\ntotem,zona,olhares,interacoes_algoritmo,interacoes_rotacao,interacoes_oraculo\n';
   S.totems.forEach(tt=>{t+=[tt.nome,ZONES[tt.zi].nome,tt.views,tt.eng[0],tt.eng[1],tt.eng[2]].join(',')+'\n';});
