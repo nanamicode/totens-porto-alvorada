@@ -15,6 +15,8 @@ const CORPO = `
 const self = {}, module = undefined;
 ${ler('util')}
 const { pk, clamp, mulberry32, norm, gammaS, betaS, poisson, f2, fmt, pc, per1k } = self.Util;
+${ler('eventos')}
+const Eventos = self.Eventos;
 ${ler('config')}
 ${ler('world')}
 ${ler('brain')}
@@ -25,6 +27,8 @@ Object.assign(PRM, opts.params || {});
 (opts.eventos || []).forEach(k => { EV[k] = true; });
 (opts.pausadas || []).forEach(c => { CON[c] = false; });
 if (opts.escalaHorario) CRE.forEach(cr => { const f = cr.tm; cr.tm = h => 1 + opts.escalaHorario * (f(h) - 1); });
+EVENTOS.ativo = !!opts.registrarEventos;
+EVENTOS.max = Infinity;
 const sementes = opts.sementes || [opts.seed];
 const resultados = sementes.map(seed => {
   init(seed);
@@ -36,13 +40,17 @@ const resultados = sementes.map(seed => {
     return (a / 3) / (d / 24);
   });
   for (let k = 0; k < opts.steps; k++) step();
-  return resumirMundo();
+  const out = resumirMundo();
+  if (opts.registrarEventos) { out.eventosEmitidos = EVENTOS.lista.slice(); EVENTOS.lista.length = 0; out.registro = registroDoMundo(); }
+  return out;
 });
 return opts.sementes ? resultados : resultados[0];`;
 
 const executar = new Function('opts', 'performance', CORPO);
 
 /* opts.seed       semente do mundo e do algoritmo
+   opts.sementes   lista de sementes rodadas em sequência no mesmo ambiente (devolve uma lista de resultados)
+   opts.registrarEventos  guarda os eventos de spot (docs/EVENTOS.md) em eventosEmitidos e o cadastro em registro
    opts.steps      spots de 30 s (2880 = um dia, começando às 06:00 de segunda)
    opts.params     sobrescreve parâmetros do algoritmo e da câmera (acc, kz, kt, rest, forget, look)
    opts.eventos    cenários ligados desde o início (chuva, show, greve, feriado)

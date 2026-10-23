@@ -18,6 +18,6 @@
 - [x] Rodar várias sementes e mostrar a variação do ganho.
 
 ## Dados reais
-- [ ] Definir o formato de evento do totem: contagem por perfil, criativo exibido e interações.
+- [x] Definir o formato de evento do totem: contagem por perfil, criativo exibido e interações. Ver docs/EVENTOS.md.
 - [ ] Conectar `Brain` a eventos reais.
 - [ ] Revisão de privacidade e LGPD antes de qualquer instalação.

@@ -54,3 +54,4 @@ function evMul(z){let m=1;
 const fatT=(r,e)=>.35+.65*Math.exp(-r*e/600);
 
 function nearestZone(x,y){let b=0,bd=1e9;for(let i=0;i<ZONES.length;i++){const d=Math.hypot(x-ZONES[i].cx,y-ZONES[i].cy);if(d<bd){bd=d;b=i;}}return b;}
+const CRE_ID=CRE.map(c=>Eventos.slug(c.nome));   // identificador de cada criativo nos eventos

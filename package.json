@@ -7,6 +7,7 @@
     "test": "node --test",
     "demo": "node examples/brain-demo.js",
     "avaliar": "node tools/avaliar.js",
+    "eventos": "node tools/exportar-eventos.js",
     "bundle": "python tools/bundle.py"
   },
   "engines": {
