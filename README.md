@@ -75,6 +75,7 @@ tests/comparacao.test.js        testes da comparação de configurações
 tests/atraso.test.js            testes da conversão com atraso
 tests/cenario.test.js           testes dos cenários salvos
 tests/lancamento.test.js        testes do criativo novo no meio da operação
+tests/metas.test.js             testes das metas de entrega por anunciante
 tests/operador.test.js          testes do Operador e do servidor
 tools/headless.js               roda o simulador sem navegador
 tools/avaliar.js                comando de avaliação com várias sementes
@@ -82,6 +83,7 @@ tools/comparar.js               compara duas configurações nas mesmas sementes
 tools/atraso.js                  compara formas de aprender com conversões que chegam depois
 tools/cenario.js                refaz ou cria um cenário no terminal
 tools/lancar.js                 mede o tempo até testar e adotar um criativo novo
+tools/metas.js                  mede o equilíbrio entre desempenho e metas de entrega
 tools/exportar-eventos.js       gera eventos de spot do simulador em JSON Lines
 tools/servidor.js               servidor HTTP do Operador (protótipo)
 prototipo/bandit_criativos.py   primeiro protótipo em Python, sem interface

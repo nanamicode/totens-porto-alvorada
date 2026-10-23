@@ -27,10 +27,13 @@
                           corrige (1 = cada interação vale 1/f, medindo a taxa sem desgaste),
                           estima (1 = estima o desgaste de cada totem pelos dados);
                           pode ser um objeto compartilhado e alterado em tempo real
-     opt.active           array de campanhas ativas (opcional, compartilhado) */
+     opt.active           array de campanhas ativas (opcional, compartilhado)
+     opt.peso             array de pesos por criativo (opcional, compartilhado, padrão 1): multiplica o valor esperado na hora de
+                          escolher, para empurrar ou segurar uma campanha (metas de entrega). 0 tira a campanha da escolha. */
   function create(opt){
     const NS=opt.nSeg,NC=opt.nCre,rng=opt.rng,zoneOf=opt.zoneOf,P=opt.params||Object.assign({},DEFAULTS);
     const active=opt.active||new Array(NC).fill(true);
+    const peso=opt.peso||new Array(NC).fill(1);
     const mk=()=>({a:new Float64Array(NS*NC),n:new Float64Array(NS*NC)});
     const T=zoneOf.map(mk),Z=Array.from({length:opt.nZones},mk),G=mk();
     const E=zoneOf.map(()=>new Float64Array(NC));       // olhares recentes de cada criativo em cada totem
@@ -85,16 +88,16 @@
           if(rec)rec.cells[s][c]={gm,zm,a,b,th,gn:G.n[k],zn:Zc.n[k],tn:t.n[k]};
         }
       }
-      let b=-1,bv=-1,s2=-1,sv=-1;
-      if(rec){rec.raw=[];rec.E=[];rec.fe=[];rec.v=[];rec.rEst=r;rec.mult=[];}
+      let b=-1,bv=-1,s2=-1,sv=-1,eb=0;
+      if(rec){rec.raw=[];rec.E=[];rec.fe=[];rec.v=[];rec.rEst=r;rec.mult=[];rec.peso=[];}
       for(let c=0;c<NC;c++){
-        const fe=fat(r,e[c]),m=mult(c,per),v=active[c]?score[c]/tot*fe*m:0;
-        if(rec){rec.mult.push(m);rec.raw.push(score[c]);rec.E.push(e[c]);rec.fe.push(fe);rec.v.push(v);}
+        const fe=fat(r,e[c]),m=mult(c,per),v=active[c]?score[c]/tot*fe*m:0,vp=v*peso[c];
+        if(rec){rec.mult.push(m);rec.raw.push(score[c]);rec.E.push(e[c]);rec.fe.push(fe);rec.v.push(v);rec.peso.push(peso[c]);}
         if(!active[c])continue;
-        if(v>bv){s2=b;sv=bv;b=c;bv=v;}else if(v>sv){s2=c;sv=v;}
+        if(vp>bv){s2=b;sv=bv;b=c;bv=vp;eb=v;}else if(vp>sv){s2=c;sv=vp;}
       }
       if(s2<0)s2=b;
-      return {c:b,run:s2,exp:bv};
+      return {c:b,run:s2,exp:eb};
     }
 
     /* seg: perfil visto pela câmera · c: criativo exibido · hit: a pessoa interagiu
@@ -184,7 +187,7 @@
     }
 
     return {choose,learn,learnLote,credit,forget,mean,globalMean,zoneMean,expose,decay,
-      wear:(i,c)=>wearOf(i,E[i][c]),rest,setRest:fn=>{restFn=fn;},setPeriodFactor:fn=>{perFn=fn;},periodFactor:mult,periods:NP,exposure:i=>E[i],active,cells:{T,Z,G},params:P,exportar,importar};
+      wear:(i,c)=>wearOf(i,E[i][c]),rest,setRest:fn=>{restFn=fn;},setPeriodFactor:fn=>{perFn=fn;},periodFactor:mult,periods:NP,exposure:i=>E[i],active,peso,cells:{T,Z,G},params:P,exportar,importar};
   }
   return {create,DEFAULTS};
 });

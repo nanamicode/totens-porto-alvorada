@@ -35,6 +35,59 @@ function processarConversoes(){
   }
 }
 function agendar(mapa,passo,x){const l=mapa.get(passo);if(l)l.push(x);else mapa.set(passo,[x]);}
+/* Metas de entrega por anunciante (docs/ALGORITMO.md). Cada campanha tem uma meta de olhares por dia e um orçamento por dia.
+   Com PRM.ritmo > 0, o operador dá a cada campanha um peso na escolha do algoritmo:
+     ρ = (fração da meta que falta) ÷ (fração do tráfego do dia que falta);  peso = ρ^ritmo, entre 0,2 e 3
+     orçamento esgotado = peso 0 (a campanha sai da escolha até a meia-noite)
+   O tráfego do dia que falta usa o total do último dia completo (no primeiro dia, supõe que as metas somam 80% da capacidade).
+   Com ritmo = 0 os pesos valem 1 e nada muda; o cumprimento é medido do mesmo jeito, para o algoritmo, a rotação e o oráculo. */
+const metaDe=c=>CRE[c].meta*PRM.metaEsc, tetoDe=c=>CRE[c].orc*PRM.metaEsc/PRM.cpm*1000;   // olhares por dia; teto de olhares do orçamento
+const novoDia=dia=>({dia,v:0,ent:[0,1,2].map(()=>new Float64Array(NC))});
+function criarMetas(){
+  const M=novoDia(Math.floor(S.t/86400));
+  M.parcial=S.t%86400!==0;       // a cidade começa às 06:00: o primeiro dia não conta no cumprimento
+  M.vEst=0;M.dias=0;M.meta=new Float64Array(NC);
+  M.cum=[0,1,2].map(()=>new Float64Array(NC));M.exc=[0,1,2].map(()=>new Float64Array(NC));
+  return M;
+}
+function virarDia(dia){
+  const M=S.met;
+  if(!M.parcial){
+    M.dias++;M.vEst=M.v;
+    for(let c=0;c<NC;c++){
+      const m=metaDe(c),t=tetoDe(c);M.meta[c]+=m;
+      for(let p=0;p<3;p++){M.cum[p][c]+=Math.min(M.ent[p][c],m);if(m>0)M.exc[p][c]+=Math.max(0,M.ent[p][c]-t);}
+    }
+  }else M.vEst=0;
+  M.dia=dia;M.v=0;M.parcial=false;
+  for(let p=0;p<3;p++)M.ent[p].fill(0);
+}
+/* quanto do tráfego esperado do dia já passou, de 0 a 1 */
+function fracaoVivida(){
+  const M=S.met;let soma=0;for(let c=0;c<NC;c++)if(CON[c])soma+=metaDe(c);
+  return Math.min(1,M.v/(M.vEst>0?M.vEst:soma/.8));
+}
+function atualizarPesos(){
+  const M=S.met,peso=brain.peso;
+  if(!(PRM.ritmo>0)){peso.fill(1);return;}
+  const resta=Math.max(.05,1-fracaoVivida());
+  for(let c=0;c<NC;c++){
+    const m=metaDe(c);
+    if(!CON[c]||m<=0){peso[c]=1;continue;}
+    if(M.ent[0][c]>=tetoDe(c)){peso[c]=0;continue;}
+    const falta=Math.max(0,1-M.ent[0][c]/m);
+    peso[c]=Math.min(3,Math.max(.2,Math.pow(falta/resta,PRM.ritmo)));
+  }
+}
+/* cumprimento: olhares entregues até a meta, nos dias completos, sobre as metas; excedente: olhares além do que o orçamento paga */
+function resumoMetas(){
+  const M=S.met;
+  return {dias:M.dias,campanhas:CRE.map((cr,c)=>({id:CRE_ID[c],meta:metaDe(c),teto:tetoDe(c),
+    hoje:[0,1,2].map(p=>M.ent[p][c]),
+    cumprimento:[0,1,2].map(p=>M.meta[c]>0?M.cum[p][c]/M.meta[c]:null),
+    excedente:[0,1,2].map(p=>M.exc[p][c])}))};
+}
+
 /* Criativo novo no meio da operação (docs/ALGORITMO.md): o criativo RES entra em campo sem nenhuma contagem aprendida.
    S.lanc acompanha o que importa: em quanto tempo o algoritmo o testa e, se o oráculo o escolhe, em quanto tempo o adota.
    Janela de 60 passos (30 min): adotado = o algoritmo o exibe em pelo menos 80% dos spots em que o oráculo o exibe. */
@@ -55,6 +108,8 @@ function acompanharLancamento(){
   if(L.adotadoEm===null&&L.oraculoUsa&&L.wa>=.8*L.wo)L.adotadoEm=dec;
 }
 function step(){
+  const dia=Math.floor(S.t/86400);if(dia!==S.met.dia)virarDia(dia);
+  atualizarPesos();
   const t=S.t,hour=(t/3600)%24,hI=hour|0,day=Math.floor(t/86400),we=(day%7)>=5||EV.feriado;
   const atrasoOn=PRM.atraso>0,mediaP=PRM.atraso*2,janela=Math.ceil(PRM.espera*mediaP);
   if(S.convQ.size||S.recQ.size)processarConversoes();
@@ -128,8 +183,8 @@ function step(){
       }
     }
     brain.expose(i,cA,N);
-    for(let p=0;p<3;p++){tt.E[p][ch[p]]+=N;const q=S.cs[p];q.v[ch[p]]+=N;q.e[ch[p]]+=hp[p];q.s[ch[p]]++;}
-    tt.views+=N;S.tot.v+=N;S.bin.v+=N;
+    for(let p=0;p<3;p++){tt.E[p][ch[p]]+=N;const q=S.cs[p];q.v[ch[p]]+=N;q.e[ch[p]]+=hp[p];q.s[ch[p]]++;S.met.ent[p][ch[p]]+=N;}
+    tt.views+=N;S.tot.v+=N;S.bin.v+=N;S.met.v+=N;
     for(let v=0;v<N;v++)tt.recent[vU[v]]++;
     tt.hrSum[hI]+=N;tt.hrCnt[hI]++;
     tt.ewma=tt.ewma*.9+N*.1;tt.lastN=N;tt.lastNe.set(ne);
@@ -178,7 +233,7 @@ function resumirMundo(){
     porCriativo:S.cs.map(c=>({olhares:Array.from(c.v),interacoes:Array.from(c.e),spots:Array.from(c.s)})),
     zonas:ZONES.map((z,zi)=>({id:z.id,interacoes:[0,1,2].map(p=>S.totems.filter(t=>t.zi===zi).reduce((a,t)=>a+t.eng[p],0))})),
     desgaste:S.totems.map(t=>({zona:t.zi,real:t.r,estimado:brain.rest(t.id)})),
-    melhor,verdade,totens:S.totems.length,lancamento:S.lanc?{passo:S.lanc.passo,testadoEm:S.lanc.testadoEm,adotadoEm:S.lanc.adotadoEm,oraculoUsa:S.lanc.oraculoUsa,oraculoJa:S.lanc.oraculoJa,totens:S.lanc.totens,fatiaAlgoritmo:S.lanc.wa/(JANELA_LANC*S.totems.length),fatiaOraculo:S.lanc.wo/(JANELA_LANC*S.totems.length)}:null,
+    melhor,verdade,totens:S.totems.length,metas:resumoMetas(),lancamento:S.lanc?{passo:S.lanc.passo,testadoEm:S.lanc.testadoEm,adotadoEm:S.lanc.adotadoEm,oraculoUsa:S.lanc.oraculoUsa,oraculoJa:S.lanc.oraculoJa,totens:S.lanc.totens,fatiaAlgoritmo:S.lanc.wa/(JANELA_LANC*S.totems.length),fatiaOraculo:S.lanc.wo/(JANELA_LANC*S.totems.length)}:null,
   };
 }
 

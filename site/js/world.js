@@ -46,7 +46,8 @@ function init(seed){
     }
   });
   const mk=n=>({a:new Float64Array(n),n:new Float64Array(n)});
-  brain=Brain.create({nSeg:NS,nCre:NC,nZones:ZONES.length,nPeriods:8,zoneOf:totems.map(t=>t.zi),rng:rB,params:PRM,active:CON});
+  brain=Brain.create({nSeg:NS,nCre:NC,nZones:ZONES.length,nPeriods:8,zoneOf:totems.map(t=>t.zi),rng:rB,params:PRM,active:CON,peso:new Array(NC).fill(1)});
   S={t:6*3600,step:0,totems,tot:{v:0,e:[0,0,0]},bins:[],bin:{v:0,e:[0,0,0]},binT:6*3600,hour:6,conv:[0,0,0],convPend:[0,0,0],convQ:new Map(),recQ:new Map(),log:[],pulses:[],lines:[],traces:[],cs:[0,1,2].map(()=>({v:new Float64Array(NC),e:new Float64Array(NC),s:new Float64Array(NC)}))};
+  S.met=criarMetas();
   S.semente=seed;S.historico=[];S.config0=configAtual();
 }

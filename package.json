@@ -12,6 +12,7 @@
     "cenario": "node tools/cenario.js",
     "atraso": "node tools/atraso.js",
     "lancar": "node tools/lancar.js",
+    "metas": "node tools/metas.js",
     "servidor": "node tools/servidor.js",
     "bundle": "python tools/bundle.py"
   },

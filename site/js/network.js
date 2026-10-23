@@ -23,6 +23,7 @@ function zoneBest(){
   });
 }
 function renderNet(){
+  renderMetas();
   const cs=S.cs,T=S.tot,cpm=PRM.cpm,val=PRM.val;
   const inv=T.v*cpm/1000,retA=T.e[0]*val,retR=T.e[1]*val;
   const tot=p=>{let t=0;for(let c=0;c<NC;c++)t+=cs[p].s[c];return t;},tA=tot(0),tR=tot(1);
@@ -43,6 +44,27 @@ function renderNet(){
   wear.sort((a,b)=>b.d-a.d);
   $('wearBody').innerHTML=wear.length?wear.slice(0,4).map(w=>`<button type="button" class="rk" data-t="${w.t.id}"><i class="dot" style="background:${CRE[w.c].cor}"></i><span>${w.t.nome} · ${CRE[w.c].nome}</span><b class="dn">${Math.round(w.d*100)}%</b></button>`).join(''):'<p class="hint">Nenhum criativo passa de 25% de desgaste.</p>';
 }
+/* metas de entrega: o que cada anunciante contratou por dia, o que o algoritmo já entregou hoje e o cumprimento nos dias completos */
+function renderMetas(){
+  const M=S.met,viv=fracaoVivida(),on=PRM.ritmo>0;
+  $('metaRitmo').checked=on;
+  const dias=M.dias,cp=x=>x==null||!dias?'–':pc(x,0);
+  let exc=0;
+  const rows=CRE.map((cr,c)=>{
+    const meta=metaDe(c);if(meta<=0||(c===RES&&!S.lanc))return '';
+    const ent=M.ent[0][c],teto=tetoDe(c),gasto=ent*PRM.cpm/1000,orc=cr.orc*PRM.metaEsc,esp=meta*viv;
+    const r=resumoMetas().campanhas[c];exc+=r.excedente[0];
+    const atras=ent<esp*.9&&ent<meta,estour=ent>=teto;
+    return `<tr${CON[c]?'':' class="alt"'}><td>${dotName(c)}${CON[c]?'':' (pausado)'}</td><td>${fmt(meta)}</td><td>${fmt(ent)} <b class="${estour?'dn':atras?'dn':'up'}">${pc(ent/meta,0)}</b></td><td>${fmt(esp)}</td><td>${brl(gasto)} de ${brl(orc)}</td><td>${cp(r.cumprimento[0])}</td><td>${cp(r.cumprimento[1])}</td><td>${on?f2(brain.peso[c],2):'–'}</td></tr>`;
+  }).filter(Boolean);
+  $('metaBody').innerHTML=table(['Campanha','Meta do dia (olhares)','Entregue hoje, algoritmo','Esperado até agora','Gasto hoje de orçamento','Cumprimento, algoritmo','Cumprimento, rotação','Peso agora'],rows);
+  $('metaSum').textContent=(on?'O algoritmo equilibra o desempenho com as metas: dá mais peso a quem está atrasado, segura quem está adiantado e para uma campanha quando o orçamento do dia acaba. ':'O algoritmo olha só o desempenho; as metas são só medidas. Marque a caixa para ele equilibrar. ')+
+    (dias?`Cumprimento ${dias===1?'no primeiro dia completo':'nos '+dias+' dias completos'}: parte da meta que foi entregue, até o limite da meta. Olhares entregues além do orçamento, algoritmo: ${fmt(exc)}.`:'O cumprimento aparece depois do primeiro dia completo (a cidade começa às 06:00, e o primeiro dia não conta).');
+}
+$('metaRitmo').addEventListener('change',e=>{
+  PRM.ritmo=e.target.checked?1:0;registrarMudanca('param','ritmo',PRM.ritmo);
+  buildParams();renderFormulas();pushLine('marco',`Metas de entrega ${PRM.ritmo?'ligadas: o algoritmo equilibra desempenho e entrega':'desligadas: o algoritmo olha só o desempenho'}`);renderMetas();
+});
 function csvText(){
   const cs=S.cs,cpm=PRM.cpm,x=(v,d=2)=>Number(v).toFixed(d);
   let t='criativo,spots_algoritmo,olhares_algoritmo,interacoes_algoritmo,custo_interacao_algoritmo,spots_rotacao,olhares_rotacao,interacoes_rotacao,custo_interacao_rotacao\n';
