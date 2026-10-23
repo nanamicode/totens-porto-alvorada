@@ -4,6 +4,7 @@
 const cvs=document.getElementById('map'),ctx=cvs.getContext('2d');
 const stat=document.createElement('canvas');
 let scale=1,dpr=1,hover=-1;
+const rV=mulberry32(99);          // sorteio só do desenho: assim a simulação não depende de quando a tela é pintada
 const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
 const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
 let roadSeed;
@@ -67,7 +68,7 @@ function drawMap(now,dt){
       const o=tt.dots[d];
       if(playing&&!reduceMotion)o.p+=o.v*dt;
       if(o.p>52||o.p<-52){o.v=-o.v;o.p=clamp(o.p,-52,52);
-        let r=rW(),s=0,acc=0;for(;s<NS-1;s++){acc+=w[s];if(r<acc)break;}o.g=s>>2;o.a=s&3;}
+        let r=rV(),s=0,acc=0;for(;s<NS-1;s++){acc+=w[s];if(r<acc)break;}o.g=s>>2;o.a=s&3;}
       const x=tt.axis==='h'?tt.x+o.p:tt.x+o.o,y=tt.axis==='h'?tt.y+o.o:tt.y+o.p;
       ctx.fillStyle=o.g===0?cM:cF;ctx.globalAlpha=.85;ctx.beginPath();ctx.arc(x,y,px(1.3+o.a*.35)*Math.max(1,scale*1.6),0,6.3);ctx.fill();
     }

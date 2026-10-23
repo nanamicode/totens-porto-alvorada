@@ -31,7 +31,7 @@ EVENTOS.ativo = !!opts.registrarEventos;
 EVENTOS.max = Infinity;
 const sementes = opts.sementes || [opts.seed];
 const resultados = sementes.map(seed => {
-  init(seed);
+  if (opts.cenario) { for (const _ of reproduzirPassos(opts.cenario)); } else init(seed);
   if (opts.escalaDesgaste) S.totems.forEach(t => { t.r *= opts.escalaDesgaste; });
   if (opts.desgasteVerdadeiro) brain.setRest(i => S.totems[i].r);
   if (opts.periodoVerdadeiro) brain.setPeriodFactor((c, per) => {   // teto: o algoritmo conhece o efeito do horário
@@ -39,8 +39,15 @@ const resultados = sementes.map(seed => {
     for (let h = 0; h < 24; h++) { const v = CRE[c].tm(h); d += v; if (((h / 3) | 0) === per) a += v; }
     return (a / 3) / (d / 24);
   });
-  for (let k = 0; k < opts.steps; k++) step();
+  if (opts.sessao) {   // mudanças feitas durante a sessão, como a tela faz: aplicadas e registradas no passo certo
+    let i = 0;
+    for (let k = 0; k < opts.steps; k++) {
+      while (i < opts.sessao.length && opts.sessao[i].passo <= k) { const m = opts.sessao[i++]; aplicarMudanca(m); registrarMudanca(m.tipo, m.chave, m.valor); }
+      step();
+    }
+  } else if (!opts.cenario) for (let k = 0; k < opts.steps; k++) step();
   const out = resumirMundo();
+  out.cenario = cenarioAtual(opts.nomeCenario);
   if (opts.registrarEventos) { out.eventosEmitidos = EVENTOS.lista.slice(); EVENTOS.lista.length = 0; out.registro = registroDoMundo(); }
   return out;
 });
@@ -49,6 +56,8 @@ return opts.sementes ? resultados : resultados[0];`;
 const executar = new Function('opts', 'performance', CORPO);
 
 /* opts.seed       semente do mundo e do algoritmo
+   opts.cenario    cenário salvo (docs/CENARIOS.md): refaz a sessão do zero; devolve também cenario, o cenário desta execução
+   opts.sessao     lista de mudanças {passo, tipo, chave, valor} aplicadas durante a execução, como faria a tela
    opts.sementes   lista de sementes rodadas em sequência no mesmo ambiente (devolve uma lista de resultados)
    opts.registrarEventos  guarda os eventos de spot (docs/EVENTOS.md) em eventosEmitidos e o cadastro em registro
    opts.steps      spots de 30 s (2880 = um dia, começando às 06:00 de segunda)

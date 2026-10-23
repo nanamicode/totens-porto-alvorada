@@ -15,7 +15,7 @@
 ## Simulador
 - [x] Redesenho visual completo, com opção 3D. Direção "Noite urbana", tema claro "Dia", vista 3D com Three.js.
 - [x] Comparar duas configurações lado a lado.
-- [ ] Salvar e carregar cenários.
+- [x] Salvar e carregar cenários. Ver docs/CENARIOS.md.
 - [x] Rodar várias sementes e mostrar a variação do ganho.
 
 ## Dados reais

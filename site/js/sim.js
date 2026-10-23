@@ -126,3 +126,40 @@ function resumirMundo(){
     melhor,verdade,totens:S.totems.length,
   };
 }
+
+/* ---------- Cenários: histórico de mudanças e reprodução do zero (docs/CENARIOS.md) ---------- */
+/* a configuração que influencia a simulação: parâmetros, cenários ligados e campanhas pausadas */
+function configAtual(){
+  return {params:Object.assign({},PRM),eventos:Object.assign({},EV),campanhasPausadas:CON.map((v,k)=>v?-1:k).filter(k=>k>=0)};
+}
+/* o que não vier no cenário volta ao padrão: parâmetros ao DEF, cenários desligados, campanhas ativas */
+function aplicarConfig(c){
+  Object.assign(PRM,DEF,c.params||{});
+  Object.keys(EV).forEach(k=>{EV[k]=!!(c.eventos&&c.eventos[k]);});
+  CON.fill(true);
+  (c.campanhasPausadas||[]).forEach(k=>{if(k>=0&&k<CON.length)CON[k]=false;});
+}
+/* quem muda a configuração durante a simulação avisa aqui, para a sessão poder ser reproduzida */
+function registrarMudanca(tipo,chave,valor){
+  const h=S.historico,u=h[h.length-1];
+  if(u&&u.passo===S.step&&u.tipo===tipo&&u.chave===chave){u.valor=valor;return;}   // arrastar um controle vale uma mudança só
+  h.push({passo:S.step,tipo,chave,valor});
+}
+function aplicarMudanca(m){
+  if(m.tipo==='param')PRM[m.chave]=m.valor;
+  else if(m.tipo==='evento')EV[m.chave]=!!m.valor;
+  else if(m.tipo==='campanha')CON[m.chave]=!!m.valor;
+}
+function cenarioAtual(nome){
+  return {versao:1,nome:nome||'',semente:S.semente,passos:S.step,config0:S.config0,mudancas:S.historico.slice(),
+    resultado:{olhares:S.tot.v,interacoes:S.tot.e.slice()}};
+}
+/* refaz a sessão do zero, um passo por vez (quem chama decide quanto tempo gastar em cada fatia) */
+function* reproduzirPassos(c){
+  aplicarConfig(c.config0||{});
+  init(c.semente);
+  const ms=c.mudancas||[];let m=0;
+  const aplicarAte=k=>{while(m<ms.length&&ms[m].passo<=k){aplicarMudanca(ms[m]);registrarMudanca(ms[m].tipo,ms[m].chave,ms[m].valor);m++;}};
+  for(let k=0;k<c.passos;k++){aplicarAte(k);step();yield k+1;}
+  aplicarAte(c.passos);
+}

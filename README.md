@@ -25,6 +25,7 @@ Depois acesse http://localhost:8000.
 - **Cenários:** chuva, show, greve e feriado.
 - **Campanhas:** pausar e retomar criativos.
 - **Painel de anunciantes:** custo por interação e retorno estimado.
+- **Cenários:** salva a sessão (semente, configuração e tudo o que você mudou) como JSON ou link, e refaz do zero até o mesmo ponto.
 - **Comparar duas configurações:** as mesmas cidades com duas configurações do algoritmo, com a diferença e o erro. Responde "esse parâmetro realmente ajuda?".
 - **Variação entre sementes:** roda várias cidades novas e mostra o ganho médio, o intervalo de 95% e o ganho de cada uma.
 
@@ -59,6 +60,8 @@ site/js/map3d.js                vista 3D com Three.js (carregado só quando se p
 site/js/calc.js                 menu de cálculos
 site/js/network.js              painel da rede, cenários e campanhas
 site/js/sementes.js             várias sementes: ganho médio e variação
+site/js/cenario.js              formato, validação e link dos cenários salvos
+site/js/cenarios.js             seção Cenários do site
 site/js/comparacao.js           receitas e estatística pareada da comparação (testada no Node)
 site/js/comparar.js             seção Comparar duas configurações do site
 site/js/main.js                 laço de animação, controles e início
@@ -69,15 +72,18 @@ tests/brain.test.js             testes do Brain isolado
 tests/algoritmo.test.js         testes do algoritmo no simulador completo, com várias sementes
 tests/eventos.test.js           testes do formato de evento
 tests/comparacao.test.js        testes da comparação de configurações
+tests/cenario.test.js           testes dos cenários salvos
 tests/operador.test.js          testes do Operador e do servidor
 tools/headless.js               roda o simulador sem navegador
 tools/avaliar.js                comando de avaliação com várias sementes
 tools/comparar.js               compara duas configurações nas mesmas sementes
+tools/cenario.js                refaz ou cria um cenário no terminal
 tools/exportar-eventos.js       gera eventos de spot do simulador em JSON Lines
 tools/servidor.js               servidor HTTP do Operador (protótipo)
 prototipo/bandit_criativos.py   primeiro protótipo em Python, sem interface
 docs/ALGORITMO.md               fórmulas e hipóteses
 docs/AVALIACAO.md               como avaliar e resultados de referência
+docs/CENARIOS.md                formato dos cenários salvos e como reproduzi-los
 docs/EVENTOS.md                 formato de evento do totem (com JSON Schema e exemplos)
 docs/OPERACAO.md                como ligar o algoritmo a totens reais (Operador e servidor)
 docs/ROADMAP.md                 próximos passos
