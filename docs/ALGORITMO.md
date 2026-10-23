@@ -21,9 +21,11 @@ posterior:   a = a_totem + K_totem·μ_zona
              b = (n_totem − a_totem) + K_totem·(1 − μ_zona)                 K_totem = 60
 amostra:     θ_s,c ~ Beta(a, b)          (aproximação normal quando a + b > 60)
 audiência:   score_c = ( Σ_s n_s·θ_s,c / N ) × f̂_c
-             f̂_c = 0,35 + 0,65·exp(−r̂·E_c / 600)                            r̂ = 0,4
+             f̂_c = 0,35 + 0,65·exp(−r̂_totem·E_c / 600)
 decisão:     c* = argmax_c score_c
-aprendizado: n[s,c*] += 1;  a[s,c*] += 1 se interagiu   (totem, zona e rede)
+aprendizado: n[s,c*] += 1;  a[s,c*] += 1/f̂ se interagiu   (totem, zona e rede)
+desgaste:    r̂_totem = média a posteriori de r numa grade de 0 a 2,
+             prior centrado em 0,4, verossimilhança Π Bernoulli( interagiu | μ_rede(s,c)·f(E; r) )
 memória:     a, n ×= 0,985 a cada hora
 ```
 
@@ -38,7 +40,7 @@ ganho:        interações_algoritmo / interações_rotação − 1
 
 ## Hipóteses a validar com dados reais
 
-- O desgaste assumido pelo algoritmo (r̂ = 0,4) é genérico. Em campo, deve ser estimado por criativo e por totem.
+- O desgaste é estimado por totem. Por criativo ainda não, porque o mundo simulado não tem desgaste próprio de cada criativo.
 - O algoritmo não usa o período do dia como contexto. A afinidade por horário existe no mundo simulado e fica sem ser aprendida.
 - A recompensa é a interação imediata (toque ou QR). Conversões com atraso não são tratadas.
 - O oráculo é guloso e antecipa o desgaste só em parte, então a eficiência pode passar de 100%.

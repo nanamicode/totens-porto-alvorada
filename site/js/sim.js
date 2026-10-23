@@ -53,9 +53,9 @@ function step(){
         const hit=u<tt.P[base+ch[p]]*fa[p];
         if(hit){tt.eng[p]++;S.tot.e[p]++;S.bin.e[p]++;hp[p]++;}
         if(p===0){
-          brain.learn(i,vU[v],cA,hit);
+          const inc=brain.learn(i,vU[v],cA,hit);
           if(TR){
-            const u2=upd[vU[v]]||(upd[vU[v]]={n:0,hit:0});u2.n++;if(hit)u2.hit++;
+            const u2=upd[vU[v]]||(upd[vU[v]]={n:0,hit:0,a:0});u2.n++;u2.a+=inc;if(hit)u2.hit++;
             if(TR.rows.length<16)TR.rows.push({ts:vT[v],us:vU[v],u,p:tt.P[base+ch[0]]*fa[0],hit});
           }
         }

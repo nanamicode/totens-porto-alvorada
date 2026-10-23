@@ -7,7 +7,7 @@
 
 ## Algoritmo
 - [ ] Período do dia como contexto.
-- [ ] Estimar o desgaste por criativo e por totem, em vez de um valor genérico.
+- [x] Estimar o desgaste por totem, em vez de um valor genérico. Falta o desgaste por criativo, que o mundo simulado ainda não tem.
 - [ ] Recompensa com atraso (conversão depois da interação).
 - [ ] Criativos novos entrando no meio da operação (partida a frio).
 - [ ] Metas de entrega por anunciante (impressões contratadas e orçamento).

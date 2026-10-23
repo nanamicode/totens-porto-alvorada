@@ -27,7 +27,7 @@ function renderPanel(){
   $('pAud').textContent=tt.lastN===0?'ninguém olhando':`${tt.lastN} ${tt.lastN===1?'pessoa':'pessoas'}`;
   const e=brain.exposure(tt.id)[c],des=brain.wear(tt.id,c);
   $('pFat').style.width=(des*100)+'%';
-  $('pFatT').textContent=`Desgaste estimado do criativo atual: ${Math.round(des*100)}% (exposição recente: ${fmt(e)} olhares)`;
+  $('pFatT').textContent=`Desgaste estimado do criativo atual: ${Math.round(des*100)}% (exposição recente: ${fmt(e)} olhares; r̂ do totem = ${f2(brain.rest(tt.id))})`;
   let tot=0;for(let s=0;s<NS;s++)tot+=tt.recent[s];
   $('pDemo').innerHTML=Array.from({length:NS},(_,s)=>{const p=tot>0?tt.recent[s]/tot:0;
     return `<span class="l">${segLabel(s)}</span><span class="b"><i style="width:${Math.min(100,p*250)}%"></i></span><span class="v">${Math.round(p*100)}%</span>`;}).join('');
