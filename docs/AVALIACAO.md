@@ -125,6 +125,22 @@ Para ligar: `contexto` no menu Cálculos > Parâmetros, ou `node tools/avaliar.j
 
 **Câmera ruim custa pouco.** Com 60% de acerto na faixa etária, o ganho foi de 21,8%.
 
+**Conversão com atraso (issue 6).** `npm run atraso` compara as formas de aprender quando a conversão chega depois. Medido com 6 sementes, 3 dias, atraso médio de 240 min (algumas campanhas convertem em minutos, outras em horas), contando as conversões chegadas e as ainda a caminho:
+
+| Forma de aprender | Ganho sobre a rotação | Eficiência |
+|---|---|---|
+| Sem atraso (referência) | 46,3% | 93,1% |
+| Atraso, olhar conta já como falha (`espera` 0) | 43,7% | 90,6% |
+| Atraso, espera uma janela de 1 × o atraso | 36,9% | 87,3% |
+| Atraso, espera uma janela de 3 × o atraso | 34,4% | 85,6% |
+| Atraso, espera uma janela de 6 × o atraso | 30,1% | 82,5% |
+
+O que isso diz, neste mundo simulado:
+- **Aprender com resultados atrasados funciona**: em todas as formas o algoritmo ganha da rotação, e a perda para o caso sem atraso é de 2,6 pontos na melhor forma (contar já como falha, somando o acerto quando chega).
+- **Esperar a janela fechar é pior**, e quanto maior a janela, pior: o algoritmo passa a enxergar o que aconteceu horas atrás, e em 3 dias isso custa mais do que o viés de contar como falha. Por isso o padrão é `espera` 0.
+- **O viés de contar como falha existe**: um criativo que converte devagar parece pior do que é enquanto suas conversões não chegam. A janela corrige isso, mas custou mais do que ajudou aqui. Com dias mais longos ou atrasos de dias, pode ser diferente: não medi.
+- Os números têm uma medida só por forma, sem intervalo de confiança; diferenças de 1 a 2 pontos entre formas vizinhas não são conclusivas.
+
 ## Limites
 
 - O mundo simulado é o mesmo em que o algoritmo foi desenvolvido. Os números provam que o algoritmo funciona nele, e não que funcionará em campo.

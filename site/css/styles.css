@@ -62,6 +62,7 @@ button,select{font:inherit;color:inherit}
 @media (pointer:coarse){.seg button,.btn{min-height:44px}}
 
 /* indicadores */
+.kconv{margin:10px 2px 0;font-size:.82rem;color:var(--muted,#8a94a3)}
 .kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
 .kpi{padding:14px 16px;min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:14px}
 .kpi small{display:block;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.08em}

@@ -14,8 +14,31 @@ function registroDoMundo(){
 }
 function stampOf(t){const day=Math.floor(t/86400),s=t%86400;return DIAS[day%7]+' '+String(Math.floor(s/3600)).padStart(2,'0')+':'+String(Math.floor(s/60%60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');}
 function pushLine(k,x){S.lines.push({k,t:stampOf(S.t),x});if(S.lines.length>500)S.lines.shift();}
+/* Conversão com atraso (docs/ALGORITMO.md). Com PRM.atraso > 0, cada interação converte com a chance cv do criativo e a
+   conversão chega depois (atraso exponencial, média PRM.atraso minutos). O algoritmo passa a aprender com as conversões:
+   espera=k>0 conta o olhar e o resultado juntos quando a janela (k × a média) fecha; espera=0 conta o olhar já como falha
+   e soma o acerto quando a conversão chega. Com atraso 0 nada disso roda e o sorteio de rC não é usado. */
+function processarConversoes(){
+  const k=S.step,q=S.convQ.get(k);
+  if(q){
+    S.convQ.delete(k);
+    for(const x of q){
+      S.conv[x.p]++;S.convPend[x.p]--;
+      const r=x.rec;
+      if(r){if(r.modo){if(!r.fim)r.k[x.seg]++;}else brain.credit(r.i,x.seg,r.c,r.per,r.e);}
+    }
+  }
+  const m=S.recQ.get(k);
+  if(m){
+    S.recQ.delete(k);
+    for(const r of m){r.fim=true;for(let s=0;s<NS;s++)if(r.n[s]>0)brain.learnLote(r.i,s,r.c,r.n[s],r.k[s],r.per,r.e);}
+  }
+}
+function agendar(mapa,passo,x){const l=mapa.get(passo);if(l)l.push(x);else mapa.set(passo,[x]);}
 function step(){
   const t=S.t,hour=(t/3600)%24,hI=hour|0,day=Math.floor(t/86400),we=(day%7)>=5||EV.feriado;
+  const atrasoOn=PRM.atraso>0,mediaP=PRM.atraso*2,janela=Math.ceil(PRM.espera*mediaP);
+  if(S.convQ.size||S.recQ.size)processarConversoes();
   const hAbs=Math.floor(t/3600);
   if(hAbs!==S.hAbs){
     if(S.hAbs!==undefined){brain.forget();pushLine('esq',`Esquecimento: todas as contagens (a, n) multiplicadas por ${f2(PRM.forget,3)} em ${(S.totems.length+ZONES.length+1)*NS*NC} células`);}
@@ -54,18 +77,29 @@ function step(){
       if(!CON[c]){oV.push(0);oF.push(1);continue;}
       let v=0;const f=fatT(tt.r,tt.E[2][c]+lam*PRM.look);
       for(let s=0;s<NS;s++){const n=N>0?nt[s]:w[s];if(n>0)v+=n*tt.P[(hI*NS+s)*NC+c];}
-      v*=f;oV.push(v/tot);oF.push(f);if(v>ov){ov=v;cO=c;}
+      v*=f*(atrasoOn?CRE[c].cv:1);oV.push(v/tot);oF.push(f);if(v>ov){ov=v;cO=c;}
     }
     const ch=[cA,cR,cO],fa=[0,0,0],hp=[0,0,0];
     for(let p=0;p<3;p++)fa[p]=fatT(tt.r,tt.E[p][ch[p]]);
     const upd={},hE=EVENTOS.ativo?new Array(NS).fill(0):null;
+    let rec=null;
+    if(atrasoOn&&N>0){
+      rec={i,c:cA,per,e:brain.exposure(i)[cA],modo:PRM.espera>0?1:0,n:new Float64Array(NS),k:new Float64Array(NS),fim:false};
+      if(rec.modo)agendar(S.recQ,S.step+janela,rec);
+    }
     for(let v=0;v<N;v++){
       const base=(hI*NS+vT[v])*NC,u=vR[v];
       for(let p=0;p<3;p++){
         const hit=u<tt.P[base+ch[p]]*fa[p];
         if(hit){tt.eng[p]++;S.tot.e[p]++;S.bin.e[p]++;hp[p]++;if(p===0&&hE)hE[vU[v]]++;}
+        if(atrasoOn&&hit&&rC()<CRE[ch[p]].cv){
+          agendar(S.convQ,S.step+Math.max(1,Math.ceil(-Math.log(1-rC())*mediaP*CRE[ch[p]].dl)),{p,rec:p===0?rec:null,seg:vU[v]});
+          S.convPend[p]++;
+        }
         if(p===0){
-          const inc=brain.learn(i,vU[v],cA,hit,per);
+          let inc=0;
+          if(!rec)inc=brain.learn(i,vU[v],cA,hit,per);
+          else{rec.n[vU[v]]++;if(!rec.modo)inc=brain.learn(i,vU[v],cA,false,per,rec.e);}
           if(TR){
             const u2=upd[vU[v]]||(upd[vU[v]]={n:0,hit:0,a:0});u2.n++;u2.a+=inc;if(hit)u2.hit++;
             if(TR.rows.length<16)TR.rows.push({ts:vT[v],us:vU[v],u,p:tt.P[base+ch[0]]*fa[0],hit});
@@ -118,7 +152,7 @@ function resumirMundo(){
     melhor.push(b);verdade.push(tb);
   }
   return {
-    olhares:S.tot.v,interacoes:S.tot.e.slice(),
+    olhares:S.tot.v,interacoes:S.tot.e.slice(),conversoes:S.conv.slice(),conversoesPendentes:S.convPend.slice(),
     bins:S.bins.map(b=>b.e),binsOlhares:S.bins.map(b=>b.v),
     porCriativo:S.cs.map(c=>({olhares:Array.from(c.v),interacoes:Array.from(c.e),spots:Array.from(c.s)})),
     zonas:ZONES.map((z,zi)=>({id:z.id,interacoes:[0,1,2].map(p=>S.totems.filter(t=>t.zi===zi).reduce((a,t)=>a+t.eng[p],0))})),
