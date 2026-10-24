@@ -16,6 +16,7 @@
   const MEIA_VIDA_MIN=150;            // exposição esquecida pela metade a cada 150 min, como no simulador
   const MAX_VISTOS=100000;            // spots lembrados para descartar duplicatas
   const VISTOS_SALVOS=20000;
+  const MAX_RECENTES=150000;          // spots lembrados para atribuir conversões que chegam depois (cerca de 1,2 dia de 42 totens)
   const horaLocal=iso=>{const m=/T(\d{2}):/.exec(iso);return m?+m[1]:0;};   // hora do relógio do próprio totem
   const periodoDe=iso=>Math.floor(horaLocal(iso)/3);
 
@@ -68,7 +69,10 @@
   /* opt.cadastro  {totens:[{id,nome,zona}], criativos:[{id,nome}]}
      opt.rng       função aleatória em [0,1) (padrão Math.random)
      opt.params    parâmetros do Brain (kz, kt, rest, forget, corrige, estima, contexto, kp)
-     opt.estado    resultado de exportar(), para retomar o aprendizado */
+     opt.estado    resultado de exportar(), para retomar o aprendizado
+     opt.recompensa  'interacao' (padrão): o algoritmo aprende com as interações do evento de spot.
+                     'conversao': aprende com os eventos `conversao`, que chegam depois; o spot conta o olhar como falha
+                     na hora e cada conversão soma o acerto quando chega (docs/EVENTOS.md, docs/ALGORITMO.md) */
   function criar(opt){
     const cad=opt.cadastro,erros=validarCadastro(cad);
     if(erros.length)throw new Error('cadastro inválido: '+erros.join('; '));
@@ -82,7 +86,11 @@
     let relogio=null;                                                  // fim do evento mais recente, em ms
     const vistos=new Set();
     const mix=cad.totens.map(()=>new Float64Array(NS));                // perfis vistos recentemente em cada totem
-    const c={aceitos:0,porSpot:0,rejeitados:0,duplicados:0,desconhecidos:0,atrasados:0};
+    const c={aceitos:0,porSpot:0,rejeitados:0,duplicados:0,desconhecidos:0,atrasados:0,conversoes:0,conversoesDuplicadas:0,conversoesSemSpot:0,conversoesRejeitadas:0};
+    const recompensa=opt.recompensa||(opt.estado&&opt.estado.recompensa)||'interacao';
+    if(recompensa!=='interacao'&&recompensa!=='conversao')throw new Error("recompensa deve ser 'interacao' ou 'conversao'");
+    const recentes=new Map();                                          // spot → {i,k,per,e,aud}: de onde veio cada conversão
+    const vistosConv=new Set();
     const ETA=opt.etaRepartir??0.1;
     const beta=cad.criativos.map(()=>new Float64Array(NS).fill(0.03));   // taxa de interação por perfil, só para repartir totais
 
@@ -95,6 +103,8 @@
       (s.mix||[]).forEach((m,i)=>{if(mix[i])mix[i].set(m);});
       (s.beta||[]).forEach((b,k)=>{if(beta[k])beta[k].set(b);});
       (s.ativos||[]).forEach((a,k)=>{if(k<NC)ativos[k]=a;});
+      (s.recentes||[]).forEach(([id,i,k,per,e,aud])=>recentes.set(id,{i,k,per,e,aud}));
+      (s.vistosConv||[]).forEach(id=>vistosConv.add(id));
     }
 
     /* perfil médio de quem passa no totem; sem histórico, todos os perfis iguais */
@@ -146,12 +156,43 @@
       avancarRelogio(fim);
       const per=periodoDe(ev.inicio),aud=PERFIS.map(p=>ev.audiencia[p]),total=aud.reduce((a,b)=>a+b,0);
       const porPerfil=typeof ev.interacoes==='object';
-      const hits=porPerfil?PERFIS.map(p=>ev.interacoes[p]):repartir(i,k,aud,total,ev.interacoes);
-      for(let s=0;s<NS;s++)if(aud[s]>0)brain.learnLote(i,s,k,aud[s],hits[s],per);
+      const porConversao=recompensa==='conversao';
+      const hits=porConversao?null:porPerfil?PERFIS.map(p=>ev.interacoes[p]):repartir(i,k,aud,total,ev.interacoes);
+      if(porConversao){
+        // o olhar entra agora como falha; o acerto vem com o evento de conversão. A exposição é a da hora do spot.
+        const e=brain.exposure(i)[k];
+        for(let s=0;s<NS;s++)if(aud[s]>0)brain.learnLote(i,s,k,aud[s],0,per,e);
+        recentes.set(ev.spot,{i,k,per,e,aud});
+        if(recentes.size>MAX_RECENTES)recentes.delete(recentes.keys().next().value);
+      }else for(let s=0;s<NS;s++)if(aud[s]>0)brain.learnLote(i,s,k,aud[s],hits[s],per);
       brain.expose(i,k,total);
       for(let s=0;s<NS;s++)mix[i][s]=mix[i][s]*0.98+aud[s];
       c.aceitos++;if(!porPerfil)c.porSpot++;
       return {aceito:true,avisos:v.avisos};
+    }
+
+    /* uma conversão que chegou depois: soma o acerto no spot de origem. Sem perfil no evento, reparte a quantidade
+       entre os perfis que estavam à frente naquele spot. Só ensina o algoritmo com recompensa 'conversao'; nos outros
+       casos é aceita e contada, mas não muda nada. */
+    function registrarConversao(ev){
+      const v=Eventos.validarConversao(ev);
+      if(!v.ok){c.conversoesRejeitadas++;return {aceito:false,motivo:'formato',erros:v.erros};}
+      if(vistosConv.has(ev.conversao)){return {aceito:false,motivo:'duplicado'};}
+      const r=recentes.get(ev.spot);
+      if(recompensa==='conversao'&&!r){c.conversoesSemSpot++;return {aceito:false,motivo:'spot desconhecido'};}
+      vistosConv.add(ev.conversao);
+      if(vistosConv.size>MAX_VISTOS)vistosConv.delete(vistosConv.values().next().value);
+      c.conversoes+=ev.quantidade;
+      if(recompensa!=='conversao')return {aceito:true,aprendeu:false};
+      if(ev.perfil!==undefined)brain.credit(r.i,PERFIS.indexOf(ev.perfil),r.k,r.per,r.e,ev.quantidade);
+      else{
+        const total=r.aud.reduce((a,b)=>a+b,0),m=total>0?null:mixEsperado(r.i);
+        for(let s=0;s<NS;s++){
+          const peso=total>0?r.aud[s]/total:m[s];
+          if(peso>0)brain.credit(r.i,s,r.k,r.per,r.e,ev.quantidade*peso);
+        }
+      }
+      return {aceito:true,aprendeu:true};
     }
 
     /* p.totem: id do totem · p.leitura: pessoas à frente agora, por perfil (objeto com os perfis ou lista de 8) · p.quando: hora, ISO 8601 */
@@ -188,16 +229,17 @@
     }
 
     function estado(){
-      return {eventos:Object.assign({},c),relogio:relogio===null?null:new Date(relogio).toISOString(),
+      return {recompensa,eventos:Object.assign({},c),relogio:relogio===null?null:new Date(relogio).toISOString(),
         totens:cad.totens.length,criativos:cad.criativos.map((x,k)=>({id:x.id,ativo:ativos[k]}))};
     }
 
     function exportar(){
       return {versao:1,cadastro:cad,params:Object.assign({},params),brain:brain.exportar(),relogio,contadores:Object.assign({},c),
+        recompensa,recentes:[...recentes].slice(-VISTOS_SALVOS).map(([id,r])=>[id,r.i,r.k,r.per,r.e,Array.from(r.aud)]),vistosConv:[...vistosConv].slice(-VISTOS_SALVOS),
         vistos:[...vistos].slice(-VISTOS_SALVOS),mix:mix.map(m=>Array.from(m)),beta:beta.map(b=>Array.from(b)),ativos:ativos.slice()};
     }
 
-    return {decidir,registrar,campanha,aprendido,estado,exportar,brain,cadastro:cad};
+    return {decidir,registrar,registrarConversao,campanha,aprendido,estado,exportar,brain,cadastro:cad};
   }
 
   return {criar,validarCadastro,validarPedido};

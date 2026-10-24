@@ -115,7 +115,7 @@ test('o estado guardado só tem identificadores do cadastro, ids de spot e núme
   assert.deepEqual(estranhos, []);
   // só as chaves conhecidas, em qualquer nível: nada de campo novo escondido no estado
   const nivel = JSON.parse(JSON.stringify(op.exportar()));
-  assert.deepEqual(Object.keys(nivel).sort(), ['ativos', 'beta', 'brain', 'cadastro', 'contadores', 'mix', 'params', 'relogio', 'versao', 'vistos'].sort());
+  assert.deepEqual(Object.keys(nivel).sort(), ['ativos', 'beta', 'brain', 'cadastro', 'contadores', 'mix', 'params', 'recentes', 'recompensa', 'relogio', 'versao', 'vistos', 'vistosConv'].sort());
   assert.ok(chaves.size > 0);
 });
 

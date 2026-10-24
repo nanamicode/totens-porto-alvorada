@@ -74,6 +74,7 @@ tests/eventos.test.js           testes do formato de evento
 tests/comparacao.test.js        testes da comparação de configurações
 tests/atraso.test.js            testes da conversão com atraso
 tests/cenario.test.js           testes dos cenários salvos
+tests/conversao.test.js         testes do evento de conversão no Operador e no servidor
 tests/lancamento.test.js        testes do criativo novo no meio da operação
 tests/metas.test.js             testes das metas de entrega por anunciante
 tests/privacidade.test.js       garantias de privacidade: só contagens, nada guardado além delas

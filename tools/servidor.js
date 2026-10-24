@@ -9,6 +9,7 @@
    --host=H         endereço (padrão 127.0.0.1, só esta máquina)
    --salvar-cada=S  segundos entre as gravações do estado (padrão 30)
    --token=T        exige "Authorization: Bearer T" em tudo, menos em /saude
+   --recompensa=R   interacao (padrão) ou conversao: o que o algoritmo aprende (conversões chegam por POST /evento, tipo "conversao")
 
    Rotas:  GET /saude · GET /estado · GET /aprendido
            POST /evento    um evento, uma lista de eventos ou JSON Lines
@@ -91,11 +92,11 @@ function criarServidor(op, opcoes = {}) {
       if (rota === 'GET /aprendido') return responder(res, 200, op.aprendido());
       if (rota === 'POST /evento') {
         const eventos = lerEventos(await lerCorpo(req));
-        const resultados = eventos.map(ev => ({ spot: ev && ev.spot, ...op.registrar(ev) }));
+        const resultados = eventos.map(ev => ({ spot: ev && ev.spot, ...(ev && ev.tipo === 'conversao' ? op.registrarConversao(ev) : op.registrar(ev)) }));
         const conta = m => resultados.filter(r => (m === 'aceito' ? r.aceito : r.motivo === m)).length;
         if (opcoes.aoMudar) opcoes.aoMudar();
         return responder(res, 200, {
-          recebidos: eventos.length, aceitos: conta('aceito'), duplicados: conta('duplicado'),
+          recebidos: eventos.length, aceitos: conta('aceito'), conversoesAceitas: eventos.filter((ev, k) => ev && ev.tipo === 'conversao' && resultados[k].aceito).length, duplicados: conta('duplicado'),
           rejeitados: resultados.filter(r => !r.aceito && r.motivo !== 'duplicado').length,
           resultados: resultados.filter(r => !r.aceito).slice(0, 100),
         });
@@ -137,12 +138,16 @@ function principal() {
   let op;
   if (arquivoEstado && fs.existsSync(arquivoEstado)) {
     const estado = JSON.parse(fs.readFileSync(arquivoEstado, 'utf8'));
-    op = Operador.criar({ cadastro: estado.cadastro, estado });
+    if (args.recompensa && estado.recompensa && args.recompensa !== estado.recompensa) {
+      console.error(`O estado guardado aprendeu com recompensa ${estado.recompensa}; trocar para ${args.recompensa} misturaria os dois. Apague o arquivo de estado para começar do zero.`);
+      process.exit(1);
+    }
+    op = Operador.criar({ cadastro: estado.cadastro, estado, recompensa: args.recompensa });
     console.log(`Aprendizado retomado de ${arquivoEstado} (${op.estado().eventos.aceitos} eventos já aprendidos).`);
     if (args.cadastro) console.log('O cadastro guardado no estado vale mais que --cadastro. Apague o arquivo de estado para começar do zero.');
   } else {
     const cad = path.resolve(args.cadastro || path.join(__dirname, '..', 'docs', 'exemplos', 'registro-exemplo.json'));
-    op = Operador.criar({ cadastro: JSON.parse(fs.readFileSync(cad, 'utf8')) });
+    op = Operador.criar({ cadastro: JSON.parse(fs.readFileSync(cad, 'utf8')), recompensa: args.recompensa });
     console.log(`Começando do zero com o cadastro ${cad}.`);
   }
   let sujo = false;

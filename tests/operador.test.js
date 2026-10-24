@@ -48,7 +48,7 @@ test('registrar aceita evento válido e recusa o resto, dizendo o motivo', () =>
   assert.equal(op.registrar(ruim).motivo, 'formato');
   assert.equal(op.registrar(evento({ t: 8 * 3600 + 60, totem: 9 })).motivo, 'totem fora do cadastro');
   assert.equal(op.registrar(evento({ t: 8 * 3600 + 90, criativo: 'novo-criativo' })).motivo, 'criativo fora do cadastro');
-  assert.deepEqual(op.estado().eventos, { aceitos: 1, porSpot: 0, rejeitados: 1, duplicados: 1, desconhecidos: 2, atrasados: 0 });
+  assert.deepEqual(op.estado().eventos, { aceitos: 1, porSpot: 0, rejeitados: 1, duplicados: 1, desconhecidos: 2, atrasados: 0, conversoes: 0, conversoesDuplicadas: 0, conversoesSemSpot: 0, conversoesRejeitadas: 0 });
 });
 
 test('eventos reais do simulador, por perfil, ensinam o melhor criativo de quase todos os perfis', () => {
