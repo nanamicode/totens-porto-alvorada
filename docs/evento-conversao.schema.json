@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Evento de conversão (versão 1)",
+  "description": "Um resultado que chegou depois do spot, ligado ao spot de origem. Só contagem: nenhum código de cupom, identificador de cliente, imagem ou dado de pessoa.",
+  "type": "object",
+  "required": ["versao", "tipo", "conversao", "spot", "quando", "quantidade"],
+  "additionalProperties": false,
+  "properties": {
+    "versao": { "const": 1 },
+    "tipo": { "const": "conversao" },
+    "conversao": { "type": "string", "pattern": "^[A-Za-z0-9_.:-]{1,80}$", "description": "Identificador único da conversão. Serve para descartar duplicatas." },
+    "spot": { "type": "string", "minLength": 1, "description": "O `spot` do evento de spot em que a pessoa viu o criativo." },
+    "quando": { "type": "string", "format": "date-time", "description": "Quando a conversão aconteceu, com fuso (ISO 8601)." },
+    "quantidade": { "type": "integer", "minimum": 1, "maximum": 1000, "description": "Quantas conversões este evento representa." },
+    "perfil": { "enum": ["H18-24", "H25-34", "H35-49", "H50+", "M18-24", "M25-34", "M35-49", "M50+"], "description": "Opcional. O perfil de quem converteu, se o sistema souber. Sem ele, a quantidade é repartida entre os perfis que estavam à frente do spot." }
+  }
+}

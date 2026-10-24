@@ -35,6 +35,31 @@
 
   const inteiro=v=>Number.isInteger(v)&&v>=0;
 
+  /* Evento `conversao` (docs/EVENTOS.md): um resultado que chegou depois do spot, ligado ao spot de origem.
+     Sem código de cupom, sem identificador de cliente: só o spot, quando, quantas e, se o sistema souber, o perfil. */
+  const CHAVES_CONVERSAO=['versao','tipo','conversao','spot','quando','quantidade'];
+  const ISO=/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$/;
+  /* o.id: identificador único da conversão · o.spot: spot de origem · o.t: segundos desde o início · o.quantidade (padrão 1) · o.perfil (opcional) */
+  function criarConversao(o){
+    const ev={versao:1,tipo:'conversao',conversao:o.id,spot:o.spot,quando:instante(o.t),quantidade:o.quantidade??1};
+    if(o.perfil!==undefined)ev.perfil=o.perfil;
+    return ev;
+  }
+  function validarConversao(ev){
+    const erros=[];
+    if(ev===null||typeof ev!=='object'||Array.isArray(ev))return {ok:false,erros:['o evento deve ser um objeto']};
+    for(const k of CHAVES_CONVERSAO)if(!(k in ev))erros.push(`falta o campo ${k}`);
+    for(const k of Object.keys(ev))if(!CHAVES_CONVERSAO.includes(k)&&k!=='perfil')erros.push(`campo desconhecido: ${k}`);
+    if('versao' in ev&&ev.versao!==1)erros.push('versao deve ser 1');
+    if('tipo' in ev&&ev.tipo!=='conversao')erros.push('tipo deve ser "conversao"');
+    if('conversao' in ev&&!(typeof ev.conversao==='string'&&/^[A-Za-z0-9_.:-]{1,80}$/.test(ev.conversao)))erros.push('conversao deve ser um identificador de até 80 letras, números ou _.:-');
+    if('spot' in ev&&!(typeof ev.spot==='string'&&ev.spot.length>0))erros.push('spot deve ser um texto não vazio');
+    if('quando' in ev&&!(typeof ev.quando==='string'&&ISO.test(ev.quando)&&!Number.isNaN(Date.parse(ev.quando))))erros.push('quando deve ser data e hora ISO 8601 com fuso');
+    if('quantidade' in ev&&!(Number.isInteger(ev.quantidade)&&ev.quantidade>=1&&ev.quantidade<=1000))erros.push('quantidade deve ser um inteiro de 1 a 1000');
+    if('perfil' in ev&&!PERFIS.includes(ev.perfil))erros.push(`perfil deve ser um de ${PERFIS.join(', ')}`);
+    return {ok:erros.length===0,erros};
+  }
+
   /* devolve {ok, erros, avisos}. Erros violam o formato; avisos são suspeitas de dado ruim. */
   function validar(ev){
     const erros=[],avisos=[];
@@ -80,5 +105,5 @@
     interacoes:typeof ev.interacoes==='number'?ev.interacoes:PERFIS.reduce((a,p)=>a+ev.interacoes[p],0),
   });
 
-  return {PERFIS,CHAVES,slug,instante,idTotem,criar,validar,totais};
+  return {PERFIS,CHAVES,CHAVES_CONVERSAO,slug,instante,idTotem,criar,validar,totais,criarConversao,validarConversao};
 });

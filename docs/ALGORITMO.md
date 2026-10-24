@@ -47,7 +47,7 @@ algoritmo:    "interagiu" passa a ser "converteu". Dois jeitos de lidar com o qu
 oráculo:      passa a maximizar interações × cv_c
 ```
 
-Com `atraso = 0` nada disso roda e o resultado é idêntico ao de antes. `Brain` oferece `learn`/`learnLote` com `eSnap` (a exposição na hora da exibição) e `credit`. O operador (`operador.js`) ainda não recebe conversões atrasadas: só o simulador as gera.
+Com `atraso = 0` nada disso roda e o resultado é idêntico ao de antes. `Brain` oferece `learn`/`learnLote` com `eSnap` (a exposição na hora da exibição) e `credit`. O operador recebe conversões atrasadas pelo evento `conversao` ([OPERACAO.md](OPERACAO.md#aprender-com-conversões)), sempre no modo `espera = 0` (olhar como falha na hora, acerto quando chega).
 
 ## Criativo novo no meio da operação
 
@@ -90,5 +90,5 @@ ganho:        interações_algoritmo / interações_rotação − 1
 
 - O desgaste é estimado por totem. Por criativo ainda não, porque o mundo simulado não tem desgaste próprio de cada criativo.
 - O período do dia como contexto é opcional e vem desligado: no mundo simulado padrão o efeito do horário é pequeno e o contexto não ajuda de forma mensurável. Com o horário pesando 2 a 3 vezes mais, ele ajuda em todas as sementes.
-- A recompensa é a interação imediata (toque ou QR), a não ser que o atraso de conversão esteja ligado (veja acima). O formato de evento `spot` v1 ainda não carrega conversões, e o atraso do mundo simulado é exponencial: o real pode ter outra forma.
+- A recompensa é a interação imediata (toque ou QR), a não ser que o atraso de conversão esteja ligado (veja acima). O atraso do mundo simulado é exponencial: o real pode ter outra forma.
 - O oráculo é guloso e antecipa o desgaste só em parte, então a eficiência pode passar de 100%.

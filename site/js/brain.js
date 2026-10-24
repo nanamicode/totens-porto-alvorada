@@ -137,9 +137,9 @@
 
     /* resultado que chegou depois da exibição (conversão com atraso): só soma o acerto, sem contar outro olhar.
        Serve a quem já contou o olhar como falha na hora da exibição (learn com hit=false); eSnap é a exposição daquela exibição. */
-    function credit(i,seg,c,per,eSnap){
+    function credit(i,seg,c,per,eSnap,n){
       const k=seg*NC+c,t=T[i],Zc=Z[zoneOf[i]],e=eSnap!==undefined?eSnap:E[i][c],f=fat(rest(i),e),m=mult(c,per);
-      const inc=1/((P.corrige?f:1)*m);
+      const inc=(n===undefined?1:n)/((P.corrige?f:1)*m);
       t.a[k]+=inc;Zc.a[k]+=inc;G.a[k]+=inc;
       return inc;
     }

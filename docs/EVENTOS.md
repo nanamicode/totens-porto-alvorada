@@ -65,6 +65,24 @@ O algoritmo aprende a taxa de interação de cada perfil, então precisa saber *
 
 > **Interações só por spot.** O Operador ([OPERACAO.md](OPERACAO.md)) reparte o total entre os perfis presentes, ajustando a taxa de cada perfil por mínimos quadrados online. Aprende bem mais devagar que por perfil nas primeiras horas: os números estão em [OPERACAO.md](OPERACAO.md#quanto-o-formato-só-total-custa). O simulador gera sempre por perfil, o que é otimista em relação a um totem só com QR.
 
+## O evento `conversao`
+
+Um resultado que chegou **depois** do spot: a compra, o cupom usado, a matrícula. É um segundo tipo de evento, ligado ao `spot` de origem. Formal: [evento-conversao.schema.json](evento-conversao.schema.json). Validador: `Eventos.validarConversao`.
+
+```json
+{ "versao": 1, "tipo": "conversao", "conversao": "cupom-884213", "spot": "T-25-20260105T070130", "quando": "2026-01-05T09:12:40-03:00", "quantidade": 1, "perfil": "M25-34" }
+```
+
+| Campo | Descrição |
+|---|---|
+| `conversao` | Identificador único da conversão (até 80 letras, números ou `_.:-`). Quem recebe descarta duplicatas por ele. **Não use o código do cupom nem um identificador do cliente**: use um número sem significado. |
+| `spot` | O `spot` do evento de spot em que a pessoa viu o criativo. Como a conversão se liga a ele (por um endereço curto no QR, por exemplo) é problema do sistema que envia. |
+| `quando` | Quando a conversão aconteceu, em ISO 8601 com fuso. |
+| `quantidade` | Quantas conversões o evento representa, de 1 a 1000. |
+| `perfil` | **Opcional.** O perfil de quem converteu, se o sistema souber. Sem ele, a quantidade é repartida entre os perfis que estavam à frente do spot, proporcional à audiência. |
+
+Regras: o formato é fechado (qualquer campo a mais é recusado, como no `spot`), e o Operador só ensina o algoritmo com ele quando está com a recompensa `conversao` ([OPERACAO.md](OPERACAO.md#aprender-com-conversões)). A conversão precisa chegar **depois** do spot de origem: se o Operador não conhece o spot (nunca chegou, ou já saiu da memória), recusa com o motivo `spot desconhecido`, e quem envia pode tentar de novo depois. Só sem dado de pessoa: o evento não leva cupom, cliente, aparelho nem imagem ([PRIVACIDADE.md](PRIVACIDADE.md)).
+
 ## Regras de qualidade
 
 `Eventos.validar` aplica estas regras e devolve erros (o evento deve ser rejeitado) e avisos (o evento é aceito, mas é suspeito).
@@ -125,6 +143,5 @@ Os testes garantem que os eventos do simulador são válidos, que somam exatamen
 
 ## O que ainda não está no formato
 
-- **Conversões com atraso** (a compra depois da interação). Seria um segundo tipo de evento, ligado ao `spot` de origem. Fica para a issue de recompensa com atraso.
 - **Campanhas e metas de entrega.** O evento não diz a qual campanha o criativo pertence.
 - **Qualidade da câmera.** Não há campo para a confiança do classificador nem para falhas do sensor.

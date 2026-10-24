@@ -83,6 +83,18 @@ Com eventos do simulador (uma semente), perfis cujo melhor criativo foi descober
 
 Sem o ajuste por mínimos quadrados, repartindo só pela taxa que o algoritmo já estimava, o total por spot chegava a 3, 4 e 5 perfis. Em malha fechada, num mundo mínimo de 6 totens, o ganho sobre o rodízio foi de 29% com interações por perfil e 28% só com o total. Num totem só com QR, as primeiras horas aprendem bem mais devagar. A medição usa uma semente e o simulador, não dados reais.
 
+## Aprender com conversões
+
+Por padrão o algoritmo aprende com as **interações** do evento de spot (toque ou QR). Com `--recompensa=conversao` (ou `Operador.criar({ recompensa: 'conversao' })`), ele aprende com as **conversões**, que chegam depois como eventos `conversao` ([EVENTOS.md](EVENTOS.md#o-evento-conversao)) pela mesma rota `POST /evento`:
+
+- O evento de spot conta o olhar na hora, como falha, e lembra de onde veio (totem, criativo, período e a exposição daquele momento).
+- Cada conversão soma o acerto no perfil de origem (ou reparte pela audiência do spot, se o evento não trouxer o perfil), usando o desgaste da hora do spot, não o de quando ela chegou.
+- A resposta de `POST /evento` traz `conversoesAceitas`. Conversão repetida volta como `duplicado`, e a de um spot que o Operador não conhece como `spot desconhecido`.
+- O Operador lembra dos últimos 150 mil spots para atribuir conversões (cerca de 1,2 dia de 42 totens) e guarda os últimos 20 mil no arquivo de estado. Uma conversão que chega depois disso é recusada.
+- O estado guardado lembra a recompensa. Trocar de recompensa com um estado já aprendido é recusado: misturaria os dois sentidos de "acerto".
+
+No exemplo `examples/operador-demo.js` (cinema converte muito e academia pouco, atraso médio de 30 min, 3 sementes), aprender com as conversões converte 35% mais do que aprender só com o toque (3.236 contra 2.397 conversões), e 74% mais do que o rodízio (1.855); aprender com o toque ganha só 34% do rodízio. São 2.500 spots por semente, sem intervalo de confiança. É um mundo simulado pequeno, e a janela de espera do simulador (`espera` > 0, docs/ALGORITMO.md) não existe no Operador: ele sempre conta o olhar como falha na hora, que foi a forma mais eficiente na medição.
+
 ## Guardar e retomar
 
 `op.exportar()` devolve tudo o que o algoritmo aprendeu e o relógio, em JSON. O servidor grava isso no arquivo de `--estado`, a cada 30 segundos se algo mudou e ao receber Ctrl+C ou o sinal de encerramento. Testei a gravação periódica: eventos enviados, servidor derrubado à força, servidor reiniciado com o mesmo arquivo, e os mesmos eventos reenviados voltam como duplicados. A gravação ao encerrar com Ctrl+C não foi testada.
@@ -95,6 +107,6 @@ O estado só vale para o mesmo cadastro. Mudar o número de totens, de zonas ou 
 - **Sem segurança de produção.** Sem criptografia (use por trás de um proxy com HTTPS), sem usuário por totem, sem limite de pedidos. Por padrão só aceita conexões da própria máquina. Não o exponha à internet sem proteção.
 - **Um processo só.** Não há réplicas nem banco de dados. Se o servidor cair de repente (sem Ctrl+C), perde-se o que veio depois da última gravação, até 30 segundos por padrão.
 - **Só medi o cálculo, não a rede.** No Node, numa máquina comum, `decidir` leva cerca de 3 microssegundos e `registrar` cerca de 40. Não medi a rota HTTP com muitos totens.
-- **Cadastro fixo.** Entrar um criativo ou totem novo no meio da operação ainda não é possível sem perder o aprendizado (issue 7).
-- **Sem metas por anunciante, sem conversões com atraso** (issues 8 e 6).
+- **Cadastro fixo.** Entrar um criativo ou totem novo no meio da operação ainda não é possível sem perder o aprendizado: o lançamento de criativo novo (issue 7) só existe no simulador.
+- **Sem metas por anunciante no Operador.** As metas de entrega (issue 8) só existem no simulador.
 - **O relógio confia nos totens.** Um totem com a hora errada distorce o período do dia (quando o contexto de horário está ligado) e a ordem do desgaste.

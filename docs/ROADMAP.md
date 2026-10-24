@@ -8,7 +8,7 @@
 ## Algoritmo
 - [x] Período do dia como contexto. Opcional e desligado por padrão: só ajuda quando o efeito do horário é forte.
 - [x] Estimar o desgaste por totem, em vez de um valor genérico. Falta o desgaste por criativo, que o mundo simulado ainda não tem.
-- [x] Recompensa com atraso (conversão depois da interação). O mundo simula a conversão e o algoritmo aprende com ela; o operador real ainda não recebe conversões atrasadas.
+- [x] Recompensa com atraso (conversão depois da interação). O mundo simula a conversão e o algoritmo aprende com ela; o operador real recebe o evento `conversao` (recompensa `conversao`).
 - [x] Criativos novos entrando no meio da operação (partida a frio). Botão "Lançar criativo novo" e métrica de tempo até testar e adotar.
 - [x] Metas de entrega por anunciante (impressões contratadas e orçamento). Painel de cumprimento e opção de equilibrar o algoritmo com as metas, desligada por padrão.
 
