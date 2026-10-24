@@ -24,8 +24,8 @@ npm run servidor -- --estado=estado.json
 | `--estado=ARQ` | Guarda o aprendizado nesse arquivo e o retoma ao reiniciar. Sem isso, o aprendizado se perde ao parar. |
 | `--salvar-cada=S` | Segundos entre as gravações do estado. Padrão 30. |
 | `--porta=N` | Porta. Padrão 8787. |
-| `--host=H` | Endereço. Padrão `127.0.0.1`, que só aceita conexões desta máquina. |
-| `--token=T` | Exige `Authorization: Bearer T` em tudo, menos em `/saude`. |
+| `--host=H` | Endereço. Padrão `127.0.0.1`, que só aceita conexões desta máquina. Qualquer outro endereço (`0.0.0.0`, o IP da rede) só sobe com `--token` de pelo menos 16 caracteres; sem isso o comando recusa e sai com erro. |
+| `--token=T` | Exige `Authorization: Bearer T` em tudo, menos em `/saude`. O token pode ter sinais de igual, e é comparado sem revelar pelo tempo de resposta quantos caracteres estavam certos. |
 
 ### Rotas
 

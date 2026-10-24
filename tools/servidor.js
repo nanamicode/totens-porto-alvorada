@@ -15,11 +15,36 @@
            POST /decidir   {totem, leitura, quando}
            POST /campanha  {criativo, ativa} */
 const http = require('http');
+const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const Operador = require('../site/js/operador.js');
 
 const LIMITE = 1024 * 1024;
+const TOKEN_MINIMO = 16;
+
+/* só esta máquina aceita conexões sem token; qualquer outro endereço exige um token de pelo menos 16 caracteres.
+   Devolve o motivo da recusa, ou null se pode subir. Não substitui TLS (docs/PRIVACIDADE.md). */
+function validarExposicao({ host, token }) {
+  if (host === 'localhost' || host === '::1' || /^127\.\d+\.\d+\.\d+$/.test(host)) return null;
+  if (!token) return `o endereço ${host} aceita conexões de outras máquinas e exige --token (pelo menos ${TOKEN_MINIMO} caracteres)`;
+  if (token.length < TOKEN_MINIMO) return `o --token precisa ter pelo menos ${TOKEN_MINIMO} caracteres quando o endereço não é local`;
+  return null;
+}
+
+/* compara sem revelar, pelo tempo de resposta, quantos caracteres do token estavam certos */
+const mesmoToken = (recebido, esperado) => {
+  const h = t => crypto.createHash('sha256').update(String(t ?? '')).digest();
+  return crypto.timingSafeEqual(h(recebido), h(esperado));
+};
+
+/* --chave=valor ou --chave; o valor pode ter sinais de igual (um token em base64, por exemplo) */
+function lerArgs(lista) {
+  return Object.fromEntries(lista.map(a => {
+    const s = a.replace(/^--/, ''), i = s.indexOf('=');
+    return i < 0 ? [s, 'true'] : [s.slice(0, i), s.slice(i + 1)];
+  }));
+}
 
 function lerCorpo(req) {
   return new Promise((resolve, reject) => {
@@ -61,7 +86,7 @@ function criarServidor(op, opcoes = {}) {
     try {
       const rota = req.method + ' ' + new URL(req.url, 'http://x').pathname;
       if (rota === 'GET /saude') return responder(res, 200, { ok: true });
-      if (opcoes.token && req.headers.authorization !== 'Bearer ' + opcoes.token) return responder(res, 401, { erro: 'não autorizado' });
+      if (opcoes.token && !mesmoToken(req.headers.authorization, 'Bearer ' + opcoes.token)) return responder(res, 401, { erro: 'não autorizado' });
       if (rota === 'GET /estado') return responder(res, 200, op.estado());
       if (rota === 'GET /aprendido') return responder(res, 200, op.aprendido());
       if (rota === 'POST /evento') {
@@ -105,7 +130,9 @@ function salvarEstado(op, arquivo) {
 }
 
 function principal() {
-  const args = Object.fromEntries(process.argv.slice(2).map(a => { const [k, v] = a.replace(/^--/, '').split('='); return [k, v ?? 'true']; }));
+  const args = lerArgs(process.argv.slice(2));
+  const recusa = validarExposicao({ host: args.host || '127.0.0.1', token: args.token });
+  if (recusa) { console.error('Não vou subir: ' + recusa + '.'); process.exit(1); }
   const arquivoEstado = args.estado;
   let op;
   if (arquivoEstado && fs.existsSync(arquivoEstado)) {
@@ -135,4 +162,4 @@ function principal() {
 }
 
 if (require.main === module) principal();
-module.exports = { criarServidor, salvarEstado };
+module.exports = { criarServidor, salvarEstado, validarExposicao, lerArgs };
