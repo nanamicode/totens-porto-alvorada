@@ -193,3 +193,28 @@ test('servidor: com token, recusa quem não o envia, menos em /saude', async () 
     assert.equal((await chama('/evento', evento(), { Authorization: 'Bearer segredo' })).corpo.aceitos, 1);
   });
 });
+
+/* ---------- exposição do servidor ---------- */
+const { validarExposicao, lerArgs } = require('../tools/servidor.js');
+const { spawnSync } = require('node:child_process');
+const SERVIDOR = require('node:path').join(__dirname, '..', 'tools', 'servidor.js');
+const TOKEN_OK = 'um-token-bem-comprido-123';
+
+test('servidor: só o endereço local dispensa o token; qualquer outro exige um token longo', () => {
+  for (const host of ['127.0.0.1', 'localhost', '::1', '127.0.0.5']) assert.equal(validarExposicao({ host, token: undefined }), null, host);
+  for (const host of ['0.0.0.0', '::', '192.168.0.10', '10.1.2.3', 'meuservidor.com', '127abc.com', '127.0.0.1.evil.com', '1270.0.0.1']) {
+    assert.match(validarExposicao({ host, token: undefined }), /exige --token/, host);
+    assert.match(validarExposicao({ host, token: 'curto' }), /pelo menos 16/, host);
+    assert.equal(validarExposicao({ host, token: TOKEN_OK }), null, host);
+  }
+});
+
+test('servidor: o token pode ter sinais de igual, e o comando recusa subir aberto sem token', () => {
+  assert.deepEqual(lerArgs(['--token=abc==', '--porta=8787', '--estado']), { token: 'abc==', porta: '8787', estado: 'true' });
+  const roda = (...a) => spawnSync(process.execPath, [SERVIDOR, ...a], { encoding: 'utf8', timeout: 20000 });
+  for (const a of [['--host=0.0.0.0'], ['--host=0.0.0.0', '--token=curto'], ['--host=::']]) {
+    const r = roda('--porta=0', ...a);
+    assert.equal(r.status, 1, a.join(' '));
+    assert.match(r.stderr, /Não vou subir/);
+  }
+});

@@ -57,7 +57,7 @@ Texto de partida, para o jurídico reescrever. Os trechos entre colchetes precis
 Do lado técnico:
 - [ ] Confirmar com o fornecedor, por escrito e com teste no equipamento, que a imagem nunca sai do totem nem é gravada em disco, e que não há telemetria de imagem.
 - [ ] Confirmar que o que o totem envia ao servidor é exatamente o evento `spot` e o pedido de `decidir` (capturar o tráfego real e conferir).
-- [ ] Colocar o servidor atrás de TLS, com token obrigatório, e restringir quem o alcança. Conferir os logs da infraestrutura (IP, rota) e definir por quanto tempo ficam.
+- [ ] Colocar o servidor atrás de TLS e restringir quem o alcança. O token obrigatório fora do endereço local já é exigido pelo comando (pelo menos 16 caracteres), mas a conexão continua sem criptografia. Conferir os logs da infraestrutura (IP, rota) e definir por quanto tempo ficam.
 - [ ] Definir a retenção do arquivo de estado e de qualquer exportação de eventos.
 - [ ] Decidir se o formato precisa de agregação mínima (por exemplo, não enviar spots com uma só pessoa).
 - [ ] Hospedar a fonte e o Three.js do site junto com a página, se o site for público.
